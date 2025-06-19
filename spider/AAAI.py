@@ -170,7 +170,7 @@ class AAAI_spider(Spider):
                 papers_info = ele.select("li.entry.inproceedings")
 
                 for paper in papers_info:
-                    if paper_count >= 1:
+                    if paper_count >= 200:
                         break
                     title = paper.select_one(".title").text
                     paper_from_link = paper.select_one("div.head").find('a').get('href')

@@ -1,8 +1,7 @@
 import uuid
 import pandas as pd
 import numpy as np
-# from helpers.prompts import extractConcepts
-from helpers.New_langchain_tongyi import TYgraphPrompt
+from helpers.LLM import TYgraphPrompt
 from helpers.prompts import extractConcepts
 
 

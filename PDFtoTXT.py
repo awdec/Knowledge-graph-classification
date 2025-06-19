@@ -49,7 +49,7 @@ def read(path):
 
 
 if __name__ == '__main__':
-    path = './spider/AAAI/paper'
+    path = './spider/AAAI/paper' # pdf 路径
     pdfList = os.listdir(path)
     # 批量读取存储
     pdf_num = 0
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         except:
             continue
         str = re.sub('.pdf', '.txt', li)
-        file1 = './spider/AAAI/txt/' + str
+        file1 = './spider/AAAI/txt/' + str # txt 路径
         with open(file1, 'w+', encoding='utf8') as f:
             f.write(content)
         pdf_num = pdf_num + 1
