@@ -88,10 +88,6 @@
 
 ​	style.py 对文本进行风格分析。
 
-​	
-
-​	
-
 ## 数据集：
 
 kaggle：https://www.kaggle.com/datasets/largerice16pro/knowledge-graph
