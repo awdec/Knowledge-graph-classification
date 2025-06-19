@@ -1,0 +1,1017 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/css/tom-select.min.css" integrity="sha512-43fHB3GLgZfz8QXl1RPQ8O66oIgv3po9cJ5erMt1c4QISq9dYb195T3vr5ImnJPXuVroKcGBPXBFKETW8jrPNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/js/tom-select.complete.js" integrity="sha512-jeF9CfnvzDiw9G9xiksVjxR2lib44Gnovvkv+3CgCG6NXCD4gqlA5nDAVW5WjpA+i+/zKsUWV5xNEbW1X/HH0Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 900px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+             #loadingBar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width: 100%;
+                 height: 900px;
+                 background-color:rgba(200,200,200,0.8);
+                 -webkit-transition: all 0.5s ease;
+                 -moz-transition: all 0.5s ease;
+                 -ms-transition: all 0.5s ease;
+                 -o-transition: all 0.5s ease;
+                 transition: all 0.5s ease;
+                 opacity:1;
+             }
+
+             #bar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width:20px;
+                 height:20px;
+                 margin:auto auto auto auto;
+                 border-radius:11px;
+                 border:2px solid rgba(30,30,30,0.05);
+                 background: rgb(0, 173, 246); /* Old browsers */
+                 box-shadow: 2px 0px 4px rgba(0,0,0,0.4);
+             }
+
+             #border {
+                 position:absolute;
+                 top:10px;
+                 left:10px;
+                 width:500px;
+                 height:23px;
+                 margin:auto auto auto auto;
+                 box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
+                 border-radius:10px;
+             }
+
+             #text {
+                 position:absolute;
+                 top:8px;
+                 left:530px;
+                 width:30px;
+                 height:50px;
+                 margin:auto auto auto auto;
+                 font-size:22px;
+                 color: #000000;
+             }
+
+             div.outerBorder {
+                 position:relative;
+                 top:400px;
+                 width:600px;
+                 height:44px;
+                 margin:auto auto auto auto;
+                 border:8px solid rgba(0,0,0,0.1);
+                 background: rgb(252,252,252); /* Old browsers */
+                 background: -moz-linear-gradient(top,  rgba(252,252,252,1) 0%, rgba(237,237,237,1) 100%); /* FF3.6+ */
+                 background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(237,237,237,1))); /* Chrome,Safari4+ */
+                 background: -webkit-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Chrome10+,Safari5.1+ */
+                 background: -o-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Opera 11.10+ */
+                 background: -ms-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* IE10+ */
+                 background: linear-gradient(to bottom,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* W3C */
+                 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
+                 border-radius:72px;
+                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+             }
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+                <div id="select-menu" class="card-header">
+                    <div class="row no-gutters">
+                        <div class="col-10 pb-2">
+                            <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="selectNode([value]);"
+                            id="select-node"
+                            placeholder="Select node..."
+                            >
+                                <option selected>Select a Node by ID</option>
+                                
+                                    <option value="(cid:98)µ0">(cid:98)µ0</option>
+                                
+                                    <option value="(cid:98)µ1">(cid:98)µ1</option>
+                                
+                                    <option value="cate">cate</option>
+                                
+                                    <option value="conformal meta-learners">conformal meta-learners</option>
+                                
+                                    <option value="dr-learners">dr-learners</option>
+                                
+                                    <option value="x-learner">x-learner</option>
+                                
+                                    <option value="absolute residual">absolute residual</option>
+                                
+                                    <option value="conformity score">conformity score</option>
+                                
+                                    <option value="predictive interval">predictive interval</option>
+                                
+                                    <option value="achieved coverage">achieved coverage</option>
+                                
+                                    <option value="dr-learner">dr-learner</option>
+                                
+                                    <option value="metrics">metrics</option>
+                                
+                                    <option value="adaptive intervals">adaptive intervals</option>
+                                
+                                    <option value="variant of cp procedure">variant of cp procedure</option>
+                                
+                                    <option value="architecture">architecture</option>
+                                
+                                    <option value="cate meta-learners">cate meta-learners</option>
+                                
+                                    <option value="conformity scores">conformity scores</option>
+                                
+                                    <option value="coverage of ites">coverage of ites</option>
+                                
+                                    <option value="coverage properties of cp">coverage properties of cp</option>
+                                
+                                    <option value="cp guarantees">cp guarantees</option>
+                                
+                                    <option value="doubly-robust learner [20]">doubly-robust learner [20]</option>
+                                
+                                    <option value="guarantees of cp">guarantees of cp</option>
+                                
+                                    <option value="individual treatment effects (ites)">individual treatment effects (ites)</option>
+                                
+                                    <option value="inductive priors">inductive priors</option>
+                                
+                                    <option value="meta-learners">meta-learners</option>
+                                
+                                    <option value="oracle conformity scores">oracle conformity scores</option>
+                                
+                                    <option value="potential outcomes (po) framework">potential outcomes (po) framework</option>
+                                
+                                    <option value="pseudo-outcome transformation">pseudo-outcome transformation</option>
+                                
+                                    <option value="re-purposing">re-purposing</option>
+                                
+                                    <option value="unified stochastic ordering framework">unified stochastic ordering framework</option>
+                                
+                                    <option value="validity of conformal meta-learners">validity of conformal meta-learners</option>
+                                
+                                    <option value="assumptions">assumptions</option>
+                                
+                                    <option value="covariates">covariates</option>
+                                
+                                    <option value="individual treatment effect">individual treatment effect</option>
+                                
+                                    <option value="outcome">outcome</option>
+                                
+                                    <option value="potential outcomes">potential outcomes</option>
+                                
+                                    <option value="treatment indicator">treatment indicator</option>
+                                
+                                    <option value="data generation process">data generation process</option>
+                                
+                                    <option value="average treatment effects (ate)">average treatment effects (ate)</option>
+                                
+                                    <option value="bart">bart</option>
+                                
+                                    <option value="bayesian methods">bayesian methods</option>
+                                
+                                    <option value="cp-based inference">cp-based inference</option>
+                                
+                                    <option value="ites">ites</option>
+                                
+                                    <option value="predictive inference">predictive inference</option>
+                                
+                                    <option value="baseline models">baseline models</option>
+                                
+                                    <option value="conformal quantile regression method">conformal quantile regression method</option>
+                                
+                                    <option value="discrepancy between the cdfs">discrepancy between the cdfs</option>
+                                
+                                    <option value="exact nested wcp">exact nested wcp</option>
+                                
+                                    <option value="fosd">fosd</option>
+                                
+                                    <option value="gradient boosting">gradient boosting</option>
+                                
+                                    <option value="inexact nested wcp">inexact nested wcp</option>
+                                
+                                    <option value="ipw- and dr-learners">ipw- and dr-learners</option>
+                                
+                                    <option value="naïve wcp">naïve wcp</option>
+                                
+                                    <option value="point estimation accuracy and interval efficiency">point estimation accuracy and interval efficiency</option>
+                                
+                                    <option value="predictive intervals">predictive intervals</option>
+                                
+                                    <option value="state-of-the-art methods">state-of-the-art methods</option>
+                                
+                                    <option value="wcp variants">wcp variants</option>
+                                
+                                    <option value="weighted conformal prediction (wcp)">weighted conformal prediction (wcp)</option>
+                                
+                                    <option value="baselines">baselines</option>
+                                
+                                    <option value="cdfs">cdfs</option>
+                                
+                                    <option value="coverage">coverage</option>
+                                
+                                    <option value="discrepancy">discrepancy</option>
+                                
+                                    <option value="dr">dr</option>
+                                
+                                    <option value="effectiveness">effectiveness</option>
+                                
+                                    <option value="empirical cdf">empirical cdf</option>
+                                
+                                    <option value="figure 4(a)">figure 4(a)</option>
+                                
+                                    <option value="figure 5">figure 5</option>
+                                
+                                    <option value="ihdpavg. len.">ihdpavg. len.</option>
+                                
+                                    <option value="inexactx">inexactx</option>
+                                
+                                    <option value="ipw">ipw</option>
+                                
+                                    <option value="naïve">naïve</option>
+                                
+                                    <option value="nlsmavg. len.">nlsmavg. len.</option>
+                                
+                                    <option value="pseudo-outcome transformations">pseudo-outcome transformations</option>
+                                
+                                    <option value="rmse">rmse</option>
+                                
+                                    <option value="runs">runs</option>
+                                
+                                    <option value="stochastic orders">stochastic orders</option>
+                                
+                                    <option value="synthetic generation process">synthetic generation process</option>
+                                
+                                    <option value="thicker tails">thicker tails</option>
+                                
+                                    <option value="conformal prediction">conformal prediction</option>
+                                
+                                    <option value="counter-factual outcomes">counter-factual outcomes</option>
+                                
+                                    <option value="fundamental problem of causal inference">fundamental problem of causal inference</option>
+                                
+                                    <option value="gaussian processes">gaussian processes</option>
+                                
+                                    <option value="interval-valued predictions">interval-valued predictions</option>
+                                
+                                    <option value="ite">ite</option>
+                                
+                                    <option value="model-specific">model-specific</option>
+                                
+                                    <option value="predictive inference on ites">predictive inference on ites</option>
+                                
+                                    <option value="calibration and test data">calibration and test data</option>
+                                
+                                    <option value="exchangeability">exchangeability</option>
+                                
+                                    <option value="calibration step">calibration step</option>
+                                
+                                    <option value="cate estimators">cate estimators</option>
+                                
+                                    <option value="model architecture">model architecture</option>
+                                
+                                    <option value="e[(cid:101)yφ | x = x]">e[(cid:101)yφ | x = x]</option>
+                                
+                                    <option value="ipw-theorem 2">ipw-theorem 2</option>
+                                
+                                    <option value="nuisance estimates (cid:98)µ0">nuisance estimates (cid:98)µ0</option>
+                                
+                                    <option value="propensity score pi">propensity score pi</option>
+                                
+                                    <option value="pseudo-outcome regression">pseudo-outcome regression</option>
+                                
+                                    <option value="pseudo-outcomes">pseudo-outcomes</option>
+                                
+                                    <option value="valid end-to-end predictive inference of ites">valid end-to-end predictive inference of ites</option>
+                                
+                                    <option value="vφ">vφ</option>
+                                
+                                    <option value="τ (x)">τ (x)</option>
+                                
+                                    <option value="propensity scores">propensity scores</option>
+                                
+                                    <option value="cate estimation">cate estimation</option>
+                                
+                                    <option value="distinct characteristics">distinct characteristics</option>
+                                
+                                    <option value="inductive biases">inductive biases</option>
+                                
+                                    <option value="regularization">regularization</option>
+                                
+                                    <option value="cate estimation rates">cate estimation rates</option>
+                                
+                                    <option value="meta-learner">meta-learner</option>
+                                
+                                    <option value="cp procedure">cp procedure</option>
+                                
+                                    <option value="generalization performance">generalization performance</option>
+                                
+                                    <option value="model-agnostic approaches">model-agnostic approaches</option>
+                                
+                                    <option value="predictive inference methods">predictive inference methods</option>
+                                
+                                    <option value="predictive inference of ites">predictive inference of ites</option>
+                                
+                                    <option value="cate model">cate model</option>
+                                
+                                    <option value="conformal meta-learner">conformal meta-learner</option>
+                                
+                                    <option value="cp">cp</option>
+                                
+                                    <option value="pseudo-intervals">pseudo-intervals</option>
+                                
+                                    <option value="two-stage pseudo-outcome regression">two-stage pseudo-outcome regression</option>
+                                
+                                    <option value="covariate/pseudo-outcome pairs">covariate/pseudo-outcome pairs</option>
+                                
+                                    <option value="causal effects">causal effects</option>
+                                
+                                    <option value="treatment effects">treatment effects</option>
+                                
+                                    <option value="crossing point">crossing point</option>
+                                
+                                    <option value="decision theory">decision theory</option>
+                                
+                                    <option value="distribution f">distribution f</option>
+                                
+                                    <option value="distribution functions">distribution functions</option>
+                                
+                                    <option value="f">f</option>
+                                
+                                    <option value="g">g</option>
+                                
+                                    <option value="stochastic dominance">stochastic dominance</option>
+                                
+                                    <option value="stochastic ordering">stochastic ordering</option>
+                                
+                                    <option value="characterization">characterization</option>
+                                
+                                    <option value="method">method</option>
+                                
+                                    <option value="α∗">α∗</option>
+                                
+                                    <option value="cm">cm</option>
+                                
+                                    <option value="ζ">ζ</option>
+                                
+                                    <option value="wcp">wcp</option>
+                                
+                                    <option value="computer based conformal meta-learners">computer based conformal meta-learners</option>
+                                
+                                    <option value="conditional average treatment effect">conditional average treatment effect</option>
+                                
+                                    <option value="conditional average treatment effect (cate)">conditional average treatment effect (cate)</option>
+                                
+                                    <option value="point estimates">point estimates</option>
+                                
+                                    <option value="ml-based meta-learners">ml-based meta-learners</option>
+                                
+                                    <option value="conditional on φ">conditional on φ</option>
+                                
+                                    <option value="pseudo-outcomes in calibration data">pseudo-outcomes in calibration data</option>
+                                
+                                    <option value="conditions (i)-(iii)">conditions (i)-(iii)</option>
+                                
+                                    <option value="v ∗">v ∗</option>
+                                
+                                    <option value="theorem 1">theorem 1</option>
+                                
+                                    <option value="adjusted models τ0 and τ1">adjusted models τ0 and τ1</option>
+                                
+                                    <option value="conformal meta-learner framework">conformal meta-learner framework</option>
+                                
+                                    <option value="coverage guarantees">coverage guarantees</option>
+                                
+                                    <option value="cumulative distribution functions (cdfs) f and g">cumulative distribution functions (cdfs) f and g</option>
+                                
+                                    <option value="exchangeable">exchangeable</option>
+                                
+                                    <option value="figure 3">figure 3</option>
+                                
+                                    <option value="high-probability coverage">high-probability coverage</option>
+                                
+                                    <option value="machine learning model">machine learning model</option>
+                                
+                                    <option value="oracle intervals">oracle intervals</option>
+                                
+                                    <option value="predictive intervals for ites">predictive intervals for ites</option>
+                                
+                                    <option value="stochastic ordering framework">stochastic ordering framework</option>
+                                
+                                    <option value="stochastic orders of vφ and v ∗">stochastic orders of vφ and v ∗</option>
+                                
+                                    <option value="theorem">theorem</option>
+                                
+                                    <option value="true ite y (1) − y (0)">true ite y (1) − y (0)</option>
+                                
+                                    <option value="v∗">v∗</option>
+                                
+                                    <option value="covariate">covariate</option>
+                                
+                                    <option value="model-agnostic meta-learners">model-agnostic meta-learners</option>
+                                
+                                    <option value="π(x)">π(x)</option>
+                                
+                                    <option value="fixed length">fixed length</option>
+                                
+                                    <option value="marginal coverage">marginal coverage</option>
+                                
+                                    <option value="ml model">ml model</option>
+                                
+                                    <option value="new point">new point</option>
+                                
+                                    <option value="prediction">prediction</option>
+                                
+                                    <option value="signed distance">signed distance</option>
+                                
+                                    <option value="split cp">split cp</option>
+                                
+                                    <option value="training dataset">training dataset</option>
+                                
+                                    <option value="variant of cp">variant of cp</option>
+                                
+                                    <option value="ipw-learner">ipw-learner</option>
+                                
+                                    <option value="learner performance">learner performance</option>
+                                
+                                    <option value="oracle score cdfs">oracle score cdfs</option>
+                                
+                                    <option value="oracle scores">oracle scores</option>
+                                
+                                    <option value="regression targets">regression targets</option>
+                                
+                                    <option value="theoretical framework">theoretical framework</option>
+                                
+                                    <option value="performance">performance</option>
+                                
+                                    <option value="conformity scores vφ">conformity scores vφ</option>
+                                
+                                    <option value="transformed outcomes v∗">transformed outcomes v∗</option>
+                                
+                                    <option value="counterfactual outcome">counterfactual outcome</option>
+                                
+                                    <option value="factual outcome">factual outcome</option>
+                                
+                                    <option value="coverage band (cid:98)c(x)">coverage band (cid:98)c(x)</option>
+                                
+                                    <option value="coverage condition (3)">coverage condition (3)</option>
+                                
+                                    <option value="e[y | x = x, w = w]">e[y | x = x, w = w]</option>
+                                
+                                    <option value="propensity score">propensity score</option>
+                                
+                                    <option value="px">px</option>
+                                
+                                    <option value="sample {zi = (xi, wi, yi)}n">sample {zi = (xi, wi, yi)}n</option>
+                                
+                                    <option value="xj">xj</option>
+                                
+                                    <option value="µw(x)">µw(x)</option>
+                                
+                                    <option value="covariate shift">covariate shift</option>
+                                
+                                    <option value="distributions of covariates">distributions of covariates</option>
+                                
+                                    <option value="exchangeability assumption">exchangeability assumption</option>
+                                
+                                    <option value="factual outcomes">factual outcomes</option>
+                                
+                                    <option value="individual subject">individual subject</option>
+                                
+                                    <option value="ml-based cate estimation">ml-based cate estimation</option>
+                                
+                                    <option value="outcomes">outcomes</option>
+                                
+                                    <option value="single function">single function</option>
+                                
+                                    <option value="supervised learning">supervised learning</option>
+                                
+                                    <option value="treatments">treatments</option>
+                                
+                                    <option value="covariate x">covariate x</option>
+                                
+                                    <option value="coverage, efficiency, point estimation accuracy">coverage, efficiency, point estimation accuracy</option>
+                                
+                                    <option value="ipw-learners">ipw-learners</option>
+                                
+                                    <option value="predictive inference procedure">predictive inference procedure</option>
+                                
+                                    <option value="data-generation process">data-generation process</option>
+                                
+                                    <option value="synthetic datasets">synthetic datasets</option>
+                                
+                                    <option value="dataset d">dataset d</option>
+                                
+                                    <option value="nuisance parameters φ">nuisance parameters φ</option>
+                                
+                                    <option value="datasets">datasets</option>
+                                
+                                    <option value="distribution">distribution</option>
+                                
+                                    <option value="model">model</option>
+                                
+                                    <option value="expected length">expected length</option>
+                                
+                                    <option value="ihdp dataset">ihdp dataset</option>
+                                
+                                    <option value="inexact wcp baseline">inexact wcp baseline</option>
+                                
+                                    <option value="performance trends">performance trends</option>
+                                
+                                    <option value="poor performance">poor performance</option>
+                                
+                                    <option value="procedure">procedure</option>
+                                
+                                    <option value="valid wcp procedures">valid wcp procedures</option>
+                                
+                                    <option value="errors in the model">errors in the model</option>
+                                
+                                    <option value="variation of individual treatment effects (ites)">variation of individual treatment effects (ites)</option>
+                                
+                                    <option value="evaluation">evaluation</option>
+                                
+                                    <option value="stochastic order">stochastic order</option>
+                                
+                                    <option value="theorem 2">theorem 2</option>
+                                
+                                    <option value="framework">framework</option>
+                                
+                                    <option value="heterogeneity">heterogeneity</option>
+                                
+                                    <option value="interventions">interventions</option>
+                                
+                                    <option value="ihdp">ihdp</option>
+                                
+                                    <option value="nlsm">nlsm</option>
+                                
+                                    <option value="inferring α∗">inferring α∗</option>
+                                
+                                    <option value="procedures">procedures</option>
+                                
+                                    <option value="quantile regression">quantile regression</option>
+                                
+                                    <option value="pos">pos</option>
+                                
+                                    <option value="limitation">limitation</option>
+                                
+                                    <option value="machine learning models">machine learning models</option>
+                                
+                                    <option value="heterogeneous treatment effects">heterogeneous treatment effects</option>
+                                
+                                    <option value="machine learning-based predictive inference">machine learning-based predictive inference</option>
+                                
+                                    <option value="individual treatment effects">individual treatment effects</option>
+                                
+                                    <option value="previous work">previous work</option>
+                                
+                                    <option value="nuisance estimates">nuisance estimates</option>
+                                
+                                    <option value="oracle conformal prediction">oracle conformal prediction</option>
+                                
+                                    <option value="cp framework">cp framework</option>
+                                
+                                    <option value="y">y</option>
+                                
+                                    <option value="predictive inference approach">predictive inference approach</option>
+                                
+                                    <option value="quantifying uncertainty">quantifying uncertainty</option>
+                                
+                                    <option value="new point xn+1">new point xn+1</option>
+                                
+                                    <option value="development of ml-based meta-learners">development of ml-based meta-learners</option>
+                                
+                                    <option value="regression">regression</option>
+                                
+                                    <option value="setup a">setup a</option>
+                                
+                                    <option value="ζ = 1">ζ = 1</option>
+                                
+                                    <option value="setup b">setup b</option>
+                                
+                                    <option value="ζ = 0">ζ = 0</option>
+                                
+                                    <option value="t-learner">t-learner</option>
+                                
+                                    <option value="s-learner">s-learner</option>
+                                
+                                    <option value="pseudo-interval">pseudo-interval</option>
+                                
+                                    <option value="weighted sum of two regression models">weighted sum of two regression models</option>
+                                
+                                    <option value="µ0">µ0</option>
+                                
+                                    <option value="µ1">µ1</option>
+                                
+                                    <option value="γ">γ</option>
+                                
+                            </select>
+                        </div>
+                        <div class="col-2 pb-2">
+                            <button type="button" class="btn btn-primary btn-block" onclick="neighbourhoodHighlight({nodes: []});">Reset Selection</button>
+                        </div>
+                    </div>
+                </div>
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+            <div id="loadingBar">
+              <div class="outerBorder">
+                <div id="text">0%</div>
+                <div id="border">
+                  <div id="bar"></div>
+                </div>
+              </div>
+            </div>
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+                  new TomSelect("#select-node",{
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      }
+                  });
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"group": 1, "id": "(cid:98)\u00b50", "label": "(cid:98)\u00b50", "shape": "dot", "size": 5}, {"group": 1, "id": "(cid:98)\u00b51", "label": "(cid:98)\u00b51", "shape": "dot", "size": 5}, {"group": 1, "id": "cate", "label": "cate", "shape": "dot", "size": 21}, {"group": 1, "id": "conformal meta-learners", "label": "conformal meta-learners", "shape": "dot", "size": 56}, {"group": 1, "id": "dr-learners", "label": "dr-learners", "shape": "dot", "size": 18}, {"group": 1, "id": "x-learner", "label": "x-learner", "shape": "dot", "size": 36}, {"group": 1, "id": "absolute residual", "label": "absolute residual", "shape": "dot", "size": 2}, {"group": 1, "id": "conformity score", "label": "conformity score", "shape": "dot", "size": 18}, {"group": 1, "id": "predictive interval", "label": "predictive interval", "shape": "dot", "size": 18}, {"group": 1, "id": "achieved coverage", "label": "achieved coverage", "shape": "dot", "size": 2}, {"group": 1, "id": "dr-learner", "label": "dr-learner", "shape": "dot", "size": 22}, {"group": 1, "id": "metrics", "label": "metrics", "shape": "dot", "size": 14}, {"group": 1, "id": "adaptive intervals", "label": "adaptive intervals", "shape": "dot", "size": 3}, {"group": 1, "id": "variant of cp procedure", "label": "variant of cp procedure", "shape": "dot", "size": 3}, {"group": 1, "id": "architecture", "label": "architecture", "shape": "dot", "size": 18}, {"group": 1, "id": "cate meta-learners", "label": "cate meta-learners", "shape": "dot", "size": 12}, {"group": 1, "id": "conformity scores", "label": "conformity scores", "shape": "dot", "size": 35}, {"group": 1, "id": "coverage of ites", "label": "coverage of ites", "shape": "dot", "size": 4}, {"group": 1, "id": "coverage properties of cp", "label": "coverage properties of cp", "shape": "dot", "size": 18}, {"group": 1, "id": "cp guarantees", "label": "cp guarantees", "shape": "dot", "size": 4}, {"group": 1, "id": "doubly-robust learner [20]", "label": "doubly-robust learner [20]", "shape": "dot", "size": 3}, {"group": 1, "id": "guarantees of cp", "label": "guarantees of cp", "shape": "dot", "size": 4}, {"group": 1, "id": "individual treatment effects (ites)", "label": "individual treatment effects (ites)", "shape": "dot", "size": 4}, {"group": 1, "id": "inductive priors", "label": "inductive priors", "shape": "dot", "size": 5}, {"group": 1, "id": "meta-learners", "label": "meta-learners", "shape": "dot", "size": 47}, {"group": 1, "id": "oracle conformity scores", "label": "oracle conformity scores", "shape": "dot", "size": 6}, {"group": 1, "id": "potential outcomes (po) framework", "label": "potential outcomes (po) framework", "shape": "dot", "size": 4}, {"group": 1, "id": "pseudo-outcome transformation", "label": "pseudo-outcome transformation", "shape": "dot", "size": 18}, {"group": 1, "id": "re-purposing", "label": "re-purposing", "shape": "dot", "size": 3}, {"group": 1, "id": "unified stochastic ordering framework", "label": "unified stochastic ordering framework", "shape": "dot", "size": 4}, {"group": 1, "id": "validity of conformal meta-learners", "label": "validity of conformal meta-learners", "shape": "dot", "size": 4}, {"group": 1, "id": "assumptions", "label": "assumptions", "shape": "dot", "size": 6}, {"group": 1, "id": "covariates", "label": "covariates", "shape": "dot", "size": 17}, {"group": 1, "id": "individual treatment effect", "label": "individual treatment effect", "shape": "dot", "size": 11}, {"group": 1, "id": "outcome", "label": "outcome", "shape": "dot", "size": 15}, {"group": 1, "id": "potential outcomes", "label": "potential outcomes", "shape": "dot", "size": 16}, {"group": 1, "id": "treatment indicator", "label": "treatment indicator", "shape": "dot", "size": 11}, {"group": 1, "id": "data generation process", "label": "data generation process", "shape": "dot", "size": 6}, {"group": 1, "id": "average treatment effects (ate)", "label": "average treatment effects (ate)", "shape": "dot", "size": 4}, {"group": 1, "id": "bart", "label": "bart", "shape": "dot", "size": 4}, {"group": 1, "id": "bayesian methods", "label": "bayesian methods", "shape": "dot", "size": 14}, {"group": 1, "id": "cp-based inference", "label": "cp-based inference", "shape": "dot", "size": 13}, {"group": 1, "id": "ites", "label": "ites", "shape": "dot", "size": 23}, {"group": 1, "id": "predictive inference", "label": "predictive inference", "shape": "dot", "size": 20}, {"group": 1, "id": "baseline models", "label": "baseline models", "shape": "dot", "size": 15}, {"group": 1, "id": "conformal quantile regression method", "label": "conformal quantile regression method", "shape": "dot", "size": 2}, {"group": 1, "id": "discrepancy between the cdfs", "label": "discrepancy between the cdfs", "shape": "dot", "size": 3}, {"group": 1, "id": "exact nested wcp", "label": "exact nested wcp", "shape": "dot", "size": 2}, {"group": 1, "id": "fosd", "label": "fosd", "shape": "dot", "size": 16}, {"group": 1, "id": "gradient boosting", "label": "gradient boosting", "shape": "dot", "size": 2}, {"group": 1, "id": "inexact nested wcp", "label": "inexact nested wcp", "shape": "dot", "size": 2}, {"group": 1, "id": "ipw- and dr-learners", "label": "ipw- and dr-learners", "shape": "dot", "size": 3}, {"group": 1, "id": "na\u00efve wcp", "label": "na\u00efve wcp", "shape": "dot", "size": 2}, {"group": 1, "id": "point estimation accuracy and interval efficiency", "label": "point estimation accuracy and interval efficiency", "shape": "dot", "size": 3}, {"group": 1, "id": "predictive intervals", "label": "predictive intervals", "shape": "dot", "size": 18}, {"group": 1, "id": "state-of-the-art methods", "label": "state-of-the-art methods", "shape": "dot", "size": 3}, {"group": 1, "id": "wcp variants", "label": "wcp variants", "shape": "dot", "size": 15}, {"group": 1, "id": "weighted conformal prediction (wcp)", "label": "weighted conformal prediction (wcp)", "shape": "dot", "size": 3}, {"group": 1, "id": "baselines", "label": "baselines", "shape": "dot", "size": 21}, {"group": 1, "id": "cdfs", "label": "cdfs", "shape": "dot", "size": 30}, {"group": 1, "id": "coverage", "label": "coverage", "shape": "dot", "size": 25}, {"group": 1, "id": "discrepancy", "label": "discrepancy", "shape": "dot", "size": 5}, {"group": 1, "id": "dr", "label": "dr", "shape": "dot", "size": 5}, {"group": 1, "id": "effectiveness", "label": "effectiveness", "shape": "dot", "size": 21}, {"group": 1, "id": "empirical cdf", "label": "empirical cdf", "shape": "dot", "size": 6}, {"group": 1, "id": "figure 4(a)", "label": "figure 4(a)", "shape": "dot", "size": 6}, {"group": 1, "id": "figure 5", "label": "figure 5", "shape": "dot", "size": 6}, {"group": 1, "id": "ihdpavg. len.", "label": "ihdpavg. len.", "shape": "dot", "size": 5}, {"group": 1, "id": "inexactx", "label": "inexactx", "shape": "dot", "size": 5}, {"group": 1, "id": "ipw", "label": "ipw", "shape": "dot", "size": 5}, {"group": 1, "id": "na\u00efve", "label": "na\u00efve", "shape": "dot", "size": 5}, {"group": 1, "id": "nlsmavg. len.", "label": "nlsmavg. len.", "shape": "dot", "size": 5}, {"group": 1, "id": "pseudo-outcome transformations", "label": "pseudo-outcome transformations", "shape": "dot", "size": 6}, {"group": 1, "id": "rmse", "label": "rmse", "shape": "dot", "size": 7}, {"group": 1, "id": "runs", "label": "runs", "shape": "dot", "size": 5}, {"group": 1, "id": "stochastic orders", "label": "stochastic orders", "shape": "dot", "size": 14}, {"group": 1, "id": "synthetic generation process", "label": "synthetic generation process", "shape": "dot", "size": 5}, {"group": 1, "id": "thicker tails", "label": "thicker tails", "shape": "dot", "size": 6}, {"group": 1, "id": "conformal prediction", "label": "conformal prediction", "shape": "dot", "size": 15}, {"group": 1, "id": "counter-factual outcomes", "label": "counter-factual outcomes", "shape": "dot", "size": 5}, {"group": 1, "id": "fundamental problem of causal inference", "label": "fundamental problem of causal inference", "shape": "dot", "size": 5}, {"group": 1, "id": "gaussian processes", "label": "gaussian processes", "shape": "dot", "size": 4}, {"group": 1, "id": "interval-valued predictions", "label": "interval-valued predictions", "shape": "dot", "size": 6}, {"group": 1, "id": "ite", "label": "ite", "shape": "dot", "size": 21}, {"group": 1, "id": "model-specific", "label": "model-specific", "shape": "dot", "size": 4}, {"group": 1, "id": "predictive inference on ites", "label": "predictive inference on ites", "shape": "dot", "size": 1}, {"group": 1, "id": "calibration and test data", "label": "calibration and test data", "shape": "dot", "size": 3}, {"group": 1, "id": "exchangeability", "label": "exchangeability", "shape": "dot", "size": 3}, {"group": 1, "id": "calibration step", "label": "calibration step", "shape": "dot", "size": 2}, {"group": 1, "id": "cate estimators", "label": "cate estimators", "shape": "dot", "size": 14}, {"group": 1, "id": "model architecture", "label": "model architecture", "shape": "dot", "size": 4}, {"group": 1, "id": "e[(cid:101)y\u03c6 | x = x]", "label": "e[(cid:101)y\u03c6 | x = x]", "shape": "dot", "size": 4}, {"group": 1, "id": "ipw-theorem 2", "label": "ipw-theorem 2", "shape": "dot", "size": 5}, {"group": 1, "id": "nuisance estimates (cid:98)\u00b50", "label": "nuisance estimates (cid:98)\u00b50", "shape": "dot", "size": 4}, {"group": 1, "id": "propensity score pi", "label": "propensity score pi", "shape": "dot", "size": 4}, {"group": 1, "id": "pseudo-outcome regression", "label": "pseudo-outcome regression", "shape": "dot", "size": 17}, {"group": 1, "id": "pseudo-outcomes", "label": "pseudo-outcomes", "shape": "dot", "size": 11}, {"group": 1, "id": "valid end-to-end predictive inference of ites", "label": "valid end-to-end predictive inference of ites", "shape": "dot", "size": 4}, {"group": 1, "id": "v\u03c6", "label": "v\u03c6", "shape": "dot", "size": 21}, {"group": 1, "id": "\u03c4 (x)", "label": "\u03c4 (x)", "shape": "dot", "size": 4}, {"group": 1, "id": "propensity scores", "label": "propensity scores", "shape": "dot", "size": 3}, {"group": 1, "id": "cate estimation", "label": "cate estimation", "shape": "dot", "size": 7}, {"group": 1, "id": "distinct characteristics", "label": "distinct characteristics", "shape": "dot", "size": 3}, {"group": 1, "id": "inductive biases", "label": "inductive biases", "shape": "dot", "size": 11}, {"group": 1, "id": "regularization", "label": "regularization", "shape": "dot", "size": 4}, {"group": 1, "id": "cate estimation rates", "label": "cate estimation rates", "shape": "dot", "size": 2}, {"group": 1, "id": "meta-learner", "label": "meta-learner", "shape": "dot", "size": 4}, {"group": 1, "id": "cp procedure", "label": "cp procedure", "shape": "dot", "size": 17}, {"group": 1, "id": "generalization performance", "label": "generalization performance", "shape": "dot", "size": 1}, {"group": 1, "id": "model-agnostic approaches", "label": "model-agnostic approaches", "shape": "dot", "size": 2}, {"group": 1, "id": "predictive inference methods", "label": "predictive inference methods", "shape": "dot", "size": 1}, {"group": 1, "id": "predictive inference of ites", "label": "predictive inference of ites", "shape": "dot", "size": 2}, {"group": 1, "id": "cate model", "label": "cate model", "shape": "dot", "size": 7}, {"group": 1, "id": "conformal meta-learner", "label": "conformal meta-learner", "shape": "dot", "size": 5}, {"group": 1, "id": "cp", "label": "cp", "shape": "dot", "size": 5}, {"group": 1, "id": "pseudo-intervals", "label": "pseudo-intervals", "shape": "dot", "size": 15}, {"group": 1, "id": "two-stage pseudo-outcome regression", "label": "two-stage pseudo-outcome regression", "shape": "dot", "size": 5}, {"group": 1, "id": "covariate/pseudo-outcome pairs", "label": "covariate/pseudo-outcome pairs", "shape": "dot", "size": 1}, {"group": 1, "id": "causal effects", "label": "causal effects", "shape": "dot", "size": 8}, {"group": 1, "id": "treatment effects", "label": "treatment effects", "shape": "dot", "size": 3}, {"group": 1, "id": "crossing point", "label": "crossing point", "shape": "dot", "size": 3}, {"group": 1, "id": "decision theory", "label": "decision theory", "shape": "dot", "size": 4}, {"group": 1, "id": "distribution f", "label": "distribution f", "shape": "dot", "size": 3}, {"group": 1, "id": "distribution functions", "label": "distribution functions", "shape": "dot", "size": 3}, {"group": 1, "id": "f", "label": "f", "shape": "dot", "size": 10}, {"group": 1, "id": "g", "label": "g", "shape": "dot", "size": 10}, {"group": 1, "id": "stochastic dominance", "label": "stochastic dominance", "shape": "dot", "size": 4}, {"group": 1, "id": "stochastic ordering", "label": "stochastic ordering", "shape": "dot", "size": 6}, {"group": 2, "id": "characterization", "label": "characterization", "shape": "dot", "size": 2}, {"group": 2, "id": "method", "label": "method", "shape": "dot", "size": 18}, {"group": 2, "id": "\u03b1\u2217", "label": "\u03b1\u2217", "shape": "dot", "size": 13}, {"group": 3, "id": "cm", "label": "cm", "shape": "dot", "size": 2}, {"group": 3, "id": "\u03b6", "label": "\u03b6", "shape": "dot", "size": 13}, {"group": 3, "id": "wcp", "label": "wcp", "shape": "dot", "size": 2}, {"group": 1, "id": "computer based conformal meta-learners", "label": "computer based conformal meta-learners", "shape": "dot", "size": 1}, {"group": 1, "id": "conditional average treatment effect", "label": "conditional average treatment effect", "shape": "dot", "size": 5}, {"group": 1, "id": "conditional average treatment effect (cate)", "label": "conditional average treatment effect (cate)", "shape": "dot", "size": 3}, {"group": 1, "id": "point estimates", "label": "point estimates", "shape": "dot", "size": 1}, {"group": 1, "id": "ml-based meta-learners", "label": "ml-based meta-learners", "shape": "dot", "size": 1}, {"group": 4, "id": "conditional on \u03c6", "label": "conditional on \u03c6", "shape": "dot", "size": 1}, {"group": 4, "id": "pseudo-outcomes in calibration data", "label": "pseudo-outcomes in calibration data", "shape": "dot", "size": 1}, {"group": 1, "id": "conditions (i)-(iii)", "label": "conditions (i)-(iii)", "shape": "dot", "size": 3}, {"group": 1, "id": "v \u2217", "label": "v \u2217", "shape": "dot", "size": 9}, {"group": 1, "id": "theorem 1", "label": "theorem 1", "shape": "dot", "size": 6}, {"group": 1, "id": "adjusted models \u03c40 and \u03c41", "label": "adjusted models \u03c40 and \u03c41", "shape": "dot", "size": 1}, {"group": 1, "id": "conformal meta-learner framework", "label": "conformal meta-learner framework", "shape": "dot", "size": 3}, {"group": 1, "id": "coverage guarantees", "label": "coverage guarantees", "shape": "dot", "size": 3}, {"group": 1, "id": "cumulative distribution functions (cdfs) f and g", "label": "cumulative distribution functions (cdfs) f and g", "shape": "dot", "size": 3}, {"group": 1, "id": "exchangeable", "label": "exchangeable", "shape": "dot", "size": 3}, {"group": 1, "id": "figure 3", "label": "figure 3", "shape": "dot", "size": 3}, {"group": 1, "id": "high-probability coverage", "label": "high-probability coverage", "shape": "dot", "size": 3}, {"group": 1, "id": "machine learning model", "label": "machine learning model", "shape": "dot", "size": 3}, {"group": 1, "id": "oracle intervals", "label": "oracle intervals", "shape": "dot", "size": 6}, {"group": 1, "id": "predictive intervals for ites", "label": "predictive intervals for ites", "shape": "dot", "size": 1}, {"group": 1, "id": "stochastic ordering framework", "label": "stochastic ordering framework", "shape": "dot", "size": 3}, {"group": 1, "id": "stochastic orders of v\u03c6 and v \u2217", "label": "stochastic orders of v\u03c6 and v \u2217", "shape": "dot", "size": 2}, {"group": 1, "id": "theorem", "label": "theorem", "shape": "dot", "size": 2}, {"group": 1, "id": "true ite y (1) \u2212 y (0)", "label": "true ite y (1) \u2212 y (0)", "shape": "dot", "size": 3}, {"group": 1, "id": "v\u2217", "label": "v\u2217", "shape": "dot", "size": 2}, {"group": 1, "id": "covariate", "label": "covariate", "shape": "dot", "size": 18}, {"group": 1, "id": "model-agnostic meta-learners", "label": "model-agnostic meta-learners", "shape": "dot", "size": 3}, {"group": 1, "id": "\u03c0(x)", "label": "\u03c0(x)", "shape": "dot", "size": 13}, {"group": 1, "id": "fixed length", "label": "fixed length", "shape": "dot", "size": 2}, {"group": 1, "id": "marginal coverage", "label": "marginal coverage", "shape": "dot", "size": 2}, {"group": 1, "id": "ml model", "label": "ml model", "shape": "dot", "size": 2}, {"group": 1, "id": "new point", "label": "new point", "shape": "dot", "size": 2}, {"group": 1, "id": "prediction", "label": "prediction", "shape": "dot", "size": 2}, {"group": 1, "id": "signed distance", "label": "signed distance", "shape": "dot", "size": 1}, {"group": 1, "id": "split cp", "label": "split cp", "shape": "dot", "size": 3}, {"group": 1, "id": "training dataset", "label": "training dataset", "shape": "dot", "size": 3}, {"group": 1, "id": "variant of cp", "label": "variant of cp", "shape": "dot", "size": 3}, {"group": 1, "id": "ipw-learner", "label": "ipw-learner", "shape": "dot", "size": 4}, {"group": 1, "id": "learner performance", "label": "learner performance", "shape": "dot", "size": 2}, {"group": 1, "id": "oracle score cdfs", "label": "oracle score cdfs", "shape": "dot", "size": 2}, {"group": 1, "id": "oracle scores", "label": "oracle scores", "shape": "dot", "size": 5}, {"group": 1, "id": "regression targets", "label": "regression targets", "shape": "dot", "size": 2}, {"group": 1, "id": "theoretical framework", "label": "theoretical framework", "shape": "dot", "size": 3}, {"group": 1, "id": "performance", "label": "performance", "shape": "dot", "size": 3}, {"group": 5, "id": "conformity scores v\u03c6", "label": "conformity scores v\u03c6", "shape": "dot", "size": 1}, {"group": 5, "id": "transformed outcomes v\u2217", "label": "transformed outcomes v\u2217", "shape": "dot", "size": 1}, {"group": 1, "id": "counterfactual outcome", "label": "counterfactual outcome", "shape": "dot", "size": 6}, {"group": 1, "id": "factual outcome", "label": "factual outcome", "shape": "dot", "size": 6}, {"group": 1, "id": "coverage band (cid:98)c(x)", "label": "coverage band (cid:98)c(x)", "shape": "dot", "size": 4}, {"group": 1, "id": "coverage condition (3)", "label": "coverage condition (3)", "shape": "dot", "size": 4}, {"group": 1, "id": "e[y | x = x, w = w]", "label": "e[y | x = x, w = w]", "shape": "dot", "size": 5}, {"group": 1, "id": "propensity score", "label": "propensity score", "shape": "dot", "size": 4}, {"group": 1, "id": "px", "label": "px", "shape": "dot", "size": 4}, {"group": 1, "id": "sample {zi = (xi, wi, yi)}n", "label": "sample {zi = (xi, wi, yi)}n", "shape": "dot", "size": 4}, {"group": 1, "id": "xj", "label": "xj", "shape": "dot", "size": 4}, {"group": 1, "id": "\u00b5w(x)", "label": "\u00b5w(x)", "shape": "dot", "size": 5}, {"group": 1, "id": "covariate shift", "label": "covariate shift", "shape": "dot", "size": 10}, {"group": 1, "id": "distributions of covariates", "label": "distributions of covariates", "shape": "dot", "size": 4}, {"group": 1, "id": "exchangeability assumption", "label": "exchangeability assumption", "shape": "dot", "size": 1}, {"group": 1, "id": "factual outcomes", "label": "factual outcomes", "shape": "dot", "size": 4}, {"group": 1, "id": "individual subject", "label": "individual subject", "shape": "dot", "size": 9}, {"group": 1, "id": "ml-based cate estimation", "label": "ml-based cate estimation", "shape": "dot", "size": 9}, {"group": 1, "id": "outcomes", "label": "outcomes", "shape": "dot", "size": 9}, {"group": 1, "id": "single function", "label": "single function", "shape": "dot", "size": 5}, {"group": 1, "id": "supervised learning", "label": "supervised learning", "shape": "dot", "size": 5}, {"group": 1, "id": "treatments", "label": "treatments", "shape": "dot", "size": 4}, {"group": 1, "id": "covariate x", "label": "covariate x", "shape": "dot", "size": 1}, {"group": 1, "id": "coverage, efficiency, point estimation accuracy", "label": "coverage, efficiency, point estimation accuracy", "shape": "dot", "size": 4}, {"group": 1, "id": "ipw-learners", "label": "ipw-learners", "shape": "dot", "size": 9}, {"group": 1, "id": "predictive inference procedure", "label": "predictive inference procedure", "shape": "dot", "size": 4}, {"group": 2, "id": "data-generation process", "label": "data-generation process", "shape": "dot", "size": 3}, {"group": 2, "id": "synthetic datasets", "label": "synthetic datasets", "shape": "dot", "size": 3}, {"group": 1, "id": "dataset d", "label": "dataset d", "shape": "dot", "size": 3}, {"group": 1, "id": "nuisance parameters \u03c6", "label": "nuisance parameters \u03c6", "shape": "dot", "size": 3}, {"group": 2, "id": "datasets", "label": "datasets", "shape": "dot", "size": 3}, {"group": 2, "id": "distribution", "label": "distribution", "shape": "dot", "size": 3}, {"group": 2, "id": "model", "label": "model", "shape": "dot", "size": 3}, {"group": 1, "id": "expected length", "label": "expected length", "shape": "dot", "size": 2}, {"group": 1, "id": "ihdp dataset", "label": "ihdp dataset", "shape": "dot", "size": 2}, {"group": 1, "id": "inexact wcp baseline", "label": "inexact wcp baseline", "shape": "dot", "size": 3}, {"group": 1, "id": "performance trends", "label": "performance trends", "shape": "dot", "size": 3}, {"group": 1, "id": "poor performance", "label": "poor performance", "shape": "dot", "size": 3}, {"group": 1, "id": "procedure", "label": "procedure", "shape": "dot", "size": 2}, {"group": 1, "id": "valid wcp procedures", "label": "valid wcp procedures", "shape": "dot", "size": 2}, {"group": 7, "id": "errors in the model", "label": "errors in the model", "shape": "dot", "size": 1}, {"group": 7, "id": "variation of individual treatment effects (ites)", "label": "variation of individual treatment effects (ites)", "shape": "dot", "size": 1}, {"group": 2, "id": "evaluation", "label": "evaluation", "shape": "dot", "size": 2}, {"group": 1, "id": "stochastic order", "label": "stochastic order", "shape": "dot", "size": 3}, {"group": 1, "id": "theorem 2", "label": "theorem 2", "shape": "dot", "size": 3}, {"group": 2, "id": "framework", "label": "framework", "shape": "dot", "size": 2}, {"group": 8, "id": "heterogeneity", "label": "heterogeneity", "shape": "dot", "size": 1}, {"group": 8, "id": "interventions", "label": "interventions", "shape": "dot", "size": 1}, {"group": 3, "id": "ihdp", "label": "ihdp", "shape": "dot", "size": 2}, {"group": 3, "id": "nlsm", "label": "nlsm", "shape": "dot", "size": 2}, {"group": 2, "id": "inferring \u03b1\u2217", "label": "inferring \u03b1\u2217", "shape": "dot", "size": 3}, {"group": 2, "id": "procedures", "label": "procedures", "shape": "dot", "size": 3}, {"group": 1, "id": "quantile regression", "label": "quantile regression", "shape": "dot", "size": 1}, {"group": 3, "id": "pos", "label": "pos", "shape": "dot", "size": 3}, {"group": 2, "id": "limitation", "label": "limitation", "shape": "dot", "size": 2}, {"group": 9, "id": "machine learning models", "label": "machine learning models", "shape": "dot", "size": 1}, {"group": 9, "id": "heterogeneous treatment effects", "label": "heterogeneous treatment effects", "shape": "dot", "size": 1}, {"group": 10, "id": "machine learning-based predictive inference", "label": "machine learning-based predictive inference", "shape": "dot", "size": 1}, {"group": 10, "id": "individual treatment effects", "label": "individual treatment effects", "shape": "dot", "size": 1}, {"group": 2, "id": "previous work", "label": "previous work", "shape": "dot", "size": 3}, {"group": 1, "id": "nuisance estimates", "label": "nuisance estimates", "shape": "dot", "size": 1}, {"group": 6, "id": "oracle conformal prediction", "label": "oracle conformal prediction", "shape": "dot", "size": 1}, {"group": 6, "id": "cp framework", "label": "cp framework", "shape": "dot", "size": 1}, {"group": 3, "id": "y", "label": "y", "shape": "dot", "size": 2}, {"group": 11, "id": "predictive inference approach", "label": "predictive inference approach", "shape": "dot", "size": 1}, {"group": 11, "id": "quantifying uncertainty", "label": "quantifying uncertainty", "shape": "dot", "size": 1}, {"group": 1, "id": "new point xn+1", "label": "new point xn+1", "shape": "dot", "size": 1}, {"group": 2, "id": "development of ml-based meta-learners", "label": "development of ml-based meta-learners", "shape": "dot", "size": 1}, {"group": 1, "id": "regression", "label": "regression", "shape": "dot", "size": 2}, {"group": 3, "id": "setup a", "label": "setup a", "shape": "dot", "size": 2}, {"group": 3, "id": "\u03b6 = 1", "label": "\u03b6 = 1", "shape": "dot", "size": 2}, {"group": 3, "id": "setup b", "label": "setup b", "shape": "dot", "size": 2}, {"group": 3, "id": "\u03b6 = 0", "label": "\u03b6 = 0", "shape": "dot", "size": 2}, {"group": 12, "id": "t-learner", "label": "t-learner", "shape": "dot", "size": 1}, {"group": 12, "id": "s-learner", "label": "s-learner", "shape": "dot", "size": 1}, {"group": 1, "id": "pseudo-interval", "label": "pseudo-interval", "shape": "dot", "size": 1}, {"group": 1, "id": "weighted sum of two regression models", "label": "weighted sum of two regression models", "shape": "dot", "size": 1}, {"group": 3, "id": "\u00b50", "label": "\u00b50", "shape": "dot", "size": 1}, {"group": 3, "id": "\u00b51", "label": "\u00b51", "shape": "dot", "size": 1}, {"group": 3, "id": "\u03b3", "label": "\u03b3", "shape": "dot", "size": 1}]);
+                  edges = new vis.DataSet([{"from": "(cid:98)\u00b50", "title": "The ML model uses nuisance estimates (cid:98)\u00b50 and (cid:98)\u00b51.", "to": "(cid:98)\u00b51", "width": 1.0}, {"from": "(cid:98)\u00b50", "title": "contextual proximity", "to": "cate", "width": 0.75}, {"from": "(cid:98)\u00b50", "title": "contextual proximity", "to": "conformal meta-learners", "width": 0.5}, {"from": "(cid:98)\u00b50", "title": "contextual proximity", "to": "dr-learners", "width": 0.5}, {"from": "(cid:98)\u00b50", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "(cid:98)\u00b51", "title": "contextual proximity", "to": "cate", "width": 0.75}, {"from": "(cid:98)\u00b51", "title": "contextual proximity", "to": "conformal meta-learners", "width": 0.5}, {"from": "(cid:98)\u00b51", "title": "contextual proximity", "to": "dr-learners", "width": 0.5}, {"from": "(cid:98)\u00b51", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "absolute residual", "title": "Common choice for the conformity score is the absolute residual.,contextual proximity", "to": "conformity score", "width": 1.75}, {"from": "absolute residual", "title": "contextual proximity", "to": "predictive interval", "width": 0.75}, {"from": "achieved coverage", "title": "contextual proximity", "to": "dr-learner", "width": 1.0}, {"from": "achieved coverage", "title": "Metrics include achieved coverage for true ITEs.,contextual proximity", "to": "metrics", "width": 2.25}, {"from": "adaptive intervals", "title": "contextual proximity", "to": "conformity score", "width": 0.75}, {"from": "adaptive intervals", "title": "contextual proximity", "to": "predictive interval", "width": 0.75}, {"from": "adaptive intervals", "title": "Proposed a variant of the CP procedure where the base model is a quantile regression with interval-valued predictions for adaptive intervals.", "to": "variant of cp procedure", "width": 1.0}, {"from": "architecture", "title": "contextual proximity", "to": "cate", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "cate meta-learners", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "conformal meta-learners", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "conformity scores", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "coverage of ites", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "coverage properties of cp", "width": 1.0}, {"from": "architecture", "title": "contextual proximity", "to": "cp guarantees", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "doubly-robust learner [20]", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "guarantees of cp", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "individual treatment effects (ites)", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "inductive priors", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "meta-learners", "width": 1.0}, {"from": "architecture", "title": "contextual proximity", "to": "oracle conformity scores", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "potential outcomes (po) framework", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "re-purposing", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "unified stochastic ordering framework", "width": 0.5}, {"from": "architecture", "title": "contextual proximity", "to": "validity of conformal meta-learners", "width": 0.5}, {"from": "assumptions", "title": "contextual proximity", "to": "covariates", "width": 0.5}, {"from": "assumptions", "title": "contextual proximity", "to": "individual treatment effect", "width": 1.0}, {"from": "assumptions", "title": "contextual proximity", "to": "outcome", "width": 0.75}, {"from": "assumptions", "title": "contextual proximity", "to": "potential outcomes", "width": 0.5}, {"from": "assumptions", "title": "contextual proximity", "to": "treatment indicator", "width": 0.5}, {"from": "assumptions", "title": "The data generation process is related to the assumptions as the assumptions guide how the data is generated and used for causal inference.", "to": "data generation process", "width": 1.0}, {"from": "average treatment effects (ate)", "title": "contextual proximity", "to": "cate", "width": 0.75}, {"from": "average treatment effects (ate)", "title": "contextual proximity", "to": "conformal meta-learners", "width": 0.5}, {"from": "average treatment effects (ate)", "title": "DR-learners provide unbiased estimates of ATE independent of the data distribution and ML model used.,contextual proximity", "to": "dr-learners", "width": 1.5}, {"from": "average treatment effects (ate)", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "bart", "title": "Bayesian methods like BART have been used for predictive inference on ITEs.,contextual proximity", "to": "bayesian methods", "width": 2.25}, {"from": "bart", "title": "contextual proximity", "to": "cp-based inference", "width": 0.5}, {"from": "bart", "title": "contextual proximity", "to": "ites", "width": 0.75}, {"from": "bart", "title": "contextual proximity", "to": "predictive inference", "width": 0.5}, {"from": "baseline models", "title": "contextual proximity", "to": "conformal meta-learners", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "conformal quantile regression method", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "discrepancy between the cdfs", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "dr-learner", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "exact nested wcp", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "fosd", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "gradient boosting", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "inexact nested wcp", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "ipw- and dr-learners", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "na\u00efve wcp", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "point estimation accuracy and interval efficiency", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "predictive intervals", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "state-of-the-art methods", "width": 0.75}, {"from": "baseline models", "title": "contextual proximity", "to": "wcp variants", "width": 2.25}, {"from": "baseline models", "title": "contextual proximity", "to": "weighted conformal prediction (wcp)", "width": 0.75}, {"from": "baselines", "title": "contextual proximity", "to": "cdfs", "width": 1.5}, {"from": "baselines", "title": "contextual proximity", "to": "conformal meta-learners", "width": 0.75}, {"from": "baselines", "title": "contextual proximity", "to": "coverage", "width": 3.0}, {"from": "baselines", "title": "contextual proximity", "to": "discrepancy", "width": 0.75}, {"from": "baselines", "title": "contextual proximity", "to": "dr", "width": 0.75}, {"from": "baselines", "title": "contextual proximity", "to": "effectiveness", "width": 2.25}, {"from": "baselines", "title": "contextual proximity", "to": "empirical cdf", "width": 0.75}, {"from": "baselines", "title": "contextual proximity", "to": "figure 4(a)", "width": 0.75}, {"from": "baselines", "title": "contextual proximity", "to": "figure 5", "width": 0.75}, {"from": "baselines", "title": "IHDPAvg. len. corresponds to the performance of all baselines in semi-synthetic datasets.,contextual proximity", "to": "ihdpavg. len.", "width": 1.75}, {"from": "baselines", "title": "contextual proximity", "to": "inexactx", "width": 0.75}, {"from": "baselines", "title": "contextual proximity", "to": "ipw", "width": 0.75}, {"from": "baselines", "title": "contextual proximity", "to": "meta-learners", "width": 2.25}, {"from": "baselines", "title": "contextual proximity", "to": "na\u00efve", "width": 0.75}, {"from": "baselines", "title": "NLSMAvg. len. corresponds to the performance of all baselines in semi-synthetic datasets.,contextual proximity", "to": "nlsmavg. len.", "width": 1.75}, {"from": "baselines", "title": "contextual proximity", "to": "pseudo-outcome transformations", "width": 0.75}, {"from": "baselines", "title": "RMSE values correspond to the performance of all baselines in semi-synthetic datasets.,contextual proximity", "to": "rmse", "width": 1.75}, {"from": "baselines", "title": "contextual proximity", "to": "runs", "width": 0.75}, {"from": "baselines", "title": "contextual proximity", "to": "stochastic orders", "width": 0.75}, {"from": "baselines", "title": "contextual proximity", "to": "synthetic generation process", "width": 0.75}, {"from": "baselines", "title": "contextual proximity", "to": "thicker tails", "width": 0.75}, {"from": "bayesian methods", "title": "contextual proximity", "to": "conformal prediction", "width": 1.25}, {"from": "bayesian methods", "title": "contextual proximity", "to": "counter-factual outcomes", "width": 1.25}, {"from": "bayesian methods", "title": "contextual proximity", "to": "coverage", "width": 1.25}, {"from": "bayesian methods", "title": "contextual proximity", "to": "cp-based inference", "width": 2.5}, {"from": "bayesian methods", "title": "contextual proximity", "to": "fundamental problem of causal inference", "width": 1.25}, {"from": "bayesian methods", "title": "contextual proximity", "to": "gaussian processes", "width": 1.25}, {"from": "bayesian methods", "title": "contextual proximity", "to": "interval-valued predictions", "width": 1.25}, {"from": "bayesian methods", "title": "contextual proximity", "to": "ite", "width": 1.5}, {"from": "bayesian methods", "title": "contextual proximity", "to": "ites", "width": 3.75}, {"from": "bayesian methods", "title": "contextual proximity", "to": "model-specific", "width": 1.25}, {"from": "bayesian methods", "title": "contextual proximity", "to": "potential outcomes", "width": 1.25}, {"from": "bayesian methods", "title": "contextual proximity", "to": "predictive inference", "width": 2.5}, {"from": "bayesian methods", "title": "Traditionally, predictive inference on ITEs has been conducted through Bayesian methods.", "to": "predictive inference on ites", "width": 1.0}, {"from": "calibration and test data", "title": "contextual proximity", "to": "conformity score", "width": 0.75}, {"from": "calibration and test data", "title": "contextual proximity", "to": "predictive interval", "width": 0.75}, {"from": "calibration and test data", "title": "The assumption needed for the condition to hold for marginal coverage is the exchangeability between calibration and test data.", "to": "exchangeability", "width": 1.0}, {"from": "calibration step", "title": "contextual proximity", "to": "cate estimators", "width": 0.5}, {"from": "calibration step", "title": "Decoupling the calibration step from the model architecture enables flexible choices of inductive priors and repurposing of existing techniques for improved predictive inference.", "to": "model architecture", "width": 1.0}, {"from": "cate", "title": "contextual proximity", "to": "conformal meta-learners", "width": 1.75}, {"from": "cate", "title": "contextual proximity", "to": "conformity scores", "width": 1.0}, {"from": "cate", "title": "contextual proximity", "to": "coverage properties of cp", "width": 0.5}, {"from": "cate", "title": "contextual proximity", "to": "dr-learners", "width": 1.5}, {"from": "cate", "title": "contextual proximity", "to": "e[(cid:101)y\u03c6 | x = x]", "width": 0.75}, {"from": "cate", "title": "contextual proximity", "to": "ipw-theorem 2", "width": 0.75}, {"from": "cate", "title": "Meta-learners provide accurate estimates of CATE.,contextual proximity", "to": "meta-learners", "width": 1.75}, {"from": "cate", "title": "contextual proximity", "to": "nuisance estimates (cid:98)\u00b50", "width": 0.75}, {"from": "cate", "title": "The outcome is equal to the Conditional Average Treatment Effect (CATE) in expectation.,contextual proximity", "to": "outcome", "width": 1.75}, {"from": "cate", "title": "contextual proximity", "to": "propensity score pi", "width": 0.75}, {"from": "cate", "title": "contextual proximity", "to": "pseudo-outcome regression", "width": 0.5}, {"from": "cate", "title": "contextual proximity", "to": "pseudo-outcomes", "width": 0.75}, {"from": "cate", "title": "contextual proximity", "to": "valid end-to-end predictive inference of ites", "width": 0.75}, {"from": "cate", "title": "contextual proximity", "to": "v\u03c6", "width": 0.75}, {"from": "cate", "title": "contextual proximity", "to": "x-learner", "width": 2.0}, {"from": "cate", "title": "contextual proximity", "to": "\u03c4 (x)", "width": 0.75}, {"from": "cate", "title": "Propensity scores are used to match the Conditional Average Treatment Effect (CATE) through the equation E[(cid:101)Y\u03c6 | X = x] = \u03c4 (x); this matching is crucial for accurate estimation of treatment effects.", "to": "propensity scores", "width": 1.0}, {"from": "cate estimation", "title": "contextual proximity", "to": "conformity scores", "width": 1.0}, {"from": "cate estimation", "title": "contextual proximity", "to": "covariates", "width": 0.5}, {"from": "cate estimation", "title": "contextual proximity", "to": "distinct characteristics", "width": 0.5}, {"from": "cate estimation", "title": "contextual proximity", "to": "inductive biases", "width": 0.5}, {"from": "cate estimation", "title": "Inductive biases associated with different joint models of \u00b50 and \u00b51 can impact CATE estimation and regularization of the CATE function.,contextual proximity", "to": "ites", "width": 2.5}, {"from": "cate estimation", "title": "contextual proximity", "to": "predictive inference", "width": 0.5}, {"from": "cate estimation", "title": "contextual proximity", "to": "regularization", "width": 0.5}, {"from": "cate estimation rates", "title": "contextual proximity", "to": "cate estimators", "width": 0.5}, {"from": "cate estimation rates", "title": "The choice of the meta-learner has an influence on the estimation rates of CATE, as shown in references [5, 20].", "to": "meta-learner", "width": 1.0}, {"from": "cate estimators", "title": "contextual proximity", "to": "conformal meta-learners", "width": 0.5}, {"from": "cate estimators", "title": "contextual proximity", "to": "covariates", "width": 0.5}, {"from": "cate estimators", "title": "contextual proximity", "to": "cp procedure", "width": 0.5}, {"from": "cate estimators", "title": "contextual proximity", "to": "generalization performance", "width": 0.5}, {"from": "cate estimators", "title": "contextual proximity", "to": "inductive biases", "width": 0.5}, {"from": "cate estimators", "title": "contextual proximity", "to": "meta-learner", "width": 0.5}, {"from": "cate estimators", "title": "contextual proximity", "to": "meta-learners", "width": 0.5}, {"from": "cate estimators", "title": "contextual proximity", "to": "model architecture", "width": 0.5}, {"from": "cate estimators", "title": "contextual proximity", "to": "model-agnostic approaches", "width": 0.5}, {"from": "cate estimators", "title": "The validity and efficiency of predictive inference methods for ITE can be affected by the choice and performance of CATE estimators.,contextual proximity", "to": "predictive inference methods", "width": 1.5}, {"from": "cate estimators", "title": "contextual proximity", "to": "predictive inference of ites", "width": 0.5}, {"from": "cate estimators", "title": "contextual proximity", "to": "pseudo-outcome regression", "width": 0.5}, {"from": "cate meta-learners", "title": "contextual proximity", "to": "cate model", "width": 1.0}, {"from": "cate meta-learners", "title": "contextual proximity", "to": "conformal meta-learner", "width": 0.5}, {"from": "cate meta-learners", "title": "contextual proximity", "to": "conformal meta-learners", "width": 0.5}, {"from": "cate meta-learners", "title": "contextual proximity", "to": "coverage properties of cp", "width": 0.5}, {"from": "cate meta-learners", "title": "In this Section, we propose an end-to-end solution to (1) and (2) by applying CP on top of CATE meta-learners in a post-hoc fashion, thereby decoupling the.", "to": "cp", "width": 1.0}, {"from": "cate meta-learners", "title": "contextual proximity", "to": "cp procedure", "width": 1.25}, {"from": "cate meta-learners", "title": "contextual proximity", "to": "inductive priors", "width": 0.5}, {"from": "cate meta-learners", "title": "contextual proximity", "to": "meta-learners", "width": 0.5}, {"from": "cate meta-learners", "title": "contextual proximity", "to": "pseudo-intervals", "width": 0.5}, {"from": "cate meta-learners", "title": "CATE meta-learners are based on pseudo-outcome regression for estimation.,contextual proximity", "to": "pseudo-outcome regression", "width": 4.5}, {"from": "cate meta-learners", "title": "contextual proximity", "to": "two-stage pseudo-outcome regression", "width": 0.5}, {"from": "cate model", "title": "contextual proximity", "to": "conformal meta-learner", "width": 0.75}, {"from": "cate model", "title": "A CATE model is trained using covariate/pseudo-outcome pairs as input data", "to": "covariate/pseudo-outcome pairs", "width": 1.0}, {"from": "cate model", "title": "The CP procedure is derived from the CATE model, allowing direct inference on ITEs.,contextual proximity", "to": "cp procedure", "width": 2.0}, {"from": "cate model", "title": "contextual proximity", "to": "pseudo-intervals", "width": 0.5}, {"from": "cate model", "title": "contextual proximity", "to": "pseudo-outcome regression", "width": 3.5}, {"from": "cate model", "title": "contextual proximity", "to": "two-stage pseudo-outcome regression", "width": 0.5}, {"from": "causal effects", "title": "contextual proximity", "to": "conformity scores", "width": 0.5}, {"from": "causal effects", "title": "contextual proximity", "to": "covariates", "width": 0.5}, {"from": "causal effects", "title": "The individual treatment effect (ITE) is related to the causal effects as it represents the effect of treatment on an individual.,contextual proximity", "to": "individual treatment effect", "width": 2.0}, {"from": "causal effects", "title": "contextual proximity", "to": "outcome", "width": 0.75}, {"from": "causal effects", "title": "contextual proximity", "to": "potential outcomes", "width": 0.5}, {"from": "causal effects", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 0.5}, {"from": "causal effects", "title": "contextual proximity", "to": "treatment indicator", "width": 0.5}, {"from": "causal effects", "title": "estimation and inference of treatment effects is challenging because causal effects are not directly observable", "to": "treatment effects", "width": 1.0}, {"from": "cdfs", "title": "contextual proximity", "to": "conformal meta-learners", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "coverage", "width": 2.0}, {"from": "cdfs", "title": "contextual proximity", "to": "crossing point", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "decision theory", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "discrepancy", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "distribution f", "width": 0.5}, {"from": "cdfs", "title": "The terms \u0027distribution functions\u0027 and \u0027CDFs\u0027 are related as CDFs are a type of distribution function, representing the probability distribution of a continuous random variable.,contextual proximity", "to": "distribution functions", "width": 1.5}, {"from": "cdfs", "title": "contextual proximity", "to": "dr", "width": 0.5}, {"from": "cdfs", "title": "The effectiveness of conformal meta-learners is related to the CDFs of conformity scores and oracle scores.,contextual proximity", "to": "effectiveness", "width": 2.5}, {"from": "cdfs", "title": "contextual proximity", "to": "empirical cdf", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "f", "width": 2.0}, {"from": "cdfs", "title": "contextual proximity", "to": "figure 4(a)", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "figure 5", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "fosd", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "g", "width": 2.0}, {"from": "cdfs", "title": "contextual proximity", "to": "ihdpavg. len.", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "inexactx", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "ipw", "width": 0.5}, {"from": "cdfs", "title": "The CDFs are averaged over 100 runs of Setups A and B of the synthetic generation process.,contextual proximity", "to": "meta-learners", "width": 3.0}, {"from": "cdfs", "title": "contextual proximity", "to": "na\u00efve", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "nlsmavg. len.", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "pseudo-outcome transformations", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "rmse", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "runs", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "stochastic dominance", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "stochastic ordering", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "stochastic orders", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "synthetic generation process", "width": 0.5}, {"from": "cdfs", "title": "contextual proximity", "to": "thicker tails", "width": 0.5}, {"from": "characterization", "title": "contextual proximity", "to": "method", "width": 0.5}, {"from": "characterization", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 0.5}, {"from": "cm", "title": "contextual proximity", "to": "\u03b6", "width": 0.75}, {"from": "cm", "title": "In the context, WCP stands for weighted CP and CM stands for conformal meta-learners", "to": "wcp", "width": 1.0}, {"from": "computer based conformal meta-learners", "title": "Computer based conformal meta-learners should have conformity scores that dominate oracle conformity scores for valid inference.", "to": "oracle conformity scores", "width": 1.0}, {"from": "conditional average treatment effect", "title": "contextual proximity", "to": "covariates", "width": 0.5}, {"from": "conditional average treatment effect", "title": "The individual treatment effect (ITE) is related to the conditional average treatment effect (CATE) as the focus shifts from deterministic CATE to random ITE.,contextual proximity", "to": "individual treatment effect", "width": 2.0}, {"from": "conditional average treatment effect", "title": "contextual proximity", "to": "outcome", "width": 0.75}, {"from": "conditional average treatment effect", "title": "contextual proximity", "to": "potential outcomes", "width": 0.5}, {"from": "conditional average treatment effect", "title": "contextual proximity", "to": "treatment indicator", "width": 0.5}, {"from": "conditional average treatment effect (cate)", "title": "contextual proximity", "to": "conformal meta-learners", "width": 0.5}, {"from": "conditional average treatment effect (cate)", "title": "Most of these models only provide point estimates of the conditional average treatment effect (CATE).", "to": "point estimates", "width": 1.0}, {"from": "conditional average treatment effect (cate)", "title": "ML-based meta-learners provide estimates of the CATE through model-agnostic approaches.", "to": "ml-based meta-learners", "width": 1.0}, {"from": "conditional on \u03c6", "title": "Pseudo-outcomes in calibration data are drawn from the target covariate distribution conditional on \u03c6", "to": "pseudo-outcomes in calibration data", "width": 1.0}, {"from": "conditions (i)-(iii)", "title": "contextual proximity", "to": "v \u2217", "width": 0.5}, {"from": "conditions (i)-(iii)", "title": "contextual proximity", "to": "v\u03c6", "width": 0.5}, {"from": "conditions (i)-(iii)", "title": "The meta-learner\u0027s fulfillment of conditions (i)-(iii) from Theorem 1 depends on how the pseudo-outcome is constructed.", "to": "theorem 1", "width": 1.0}, {"from": "conformal meta-learner", "title": "The conformal meta-learner uses adjusted models \u03c40 and \u03c41 trained separately on treated and control datasets", "to": "adjusted models \u03c40 and \u03c41", "width": 1.0}, {"from": "conformal meta-learner", "title": "contextual proximity", "to": "cp procedure", "width": 0.5}, {"from": "conformal meta-learner", "title": "Pseudo-outcome regression is a step in the Conformal Meta-learner algorithm.,contextual proximity", "to": "pseudo-outcome regression", "width": 2.75}, {"from": "conformal meta-learner framework", "title": "The conformal meta-learner framework decouples the CP procedure from the inductive priors encoded by meta-learners, leading to improved CATE estimation and enabling efficient inference on Individual Treatment Effects (ITEs).", "to": "cp procedure", "width": 1.0}, {"from": "conformal meta-learner framework", "title": "contextual proximity", "to": "pseudo-outcome regression", "width": 0.5}, {"from": "conformal meta-learner framework", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "conformity scores", "width": 1.25}, {"from": "conformal meta-learners", "title": "Conformal meta-learners focus on the distribution of covariates associated with pseudo-outcomes, ensuring consistency between training and testing data for reliable predictive inference.", "to": "covariates", "width": 1.0}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "coverage", "width": 1.0}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "coverage guarantees", "width": 0.75}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "coverage properties of cp", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "cp procedure", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "cumulative distribution functions (cdfs) f and g", "width": 0.75}, {"from": "conformal meta-learners", "title": "The effectiveness of conformal meta-learners depends on the discrepancy between the Cumulative Distribution Functions (CDFs).", "to": "discrepancy between the cdfs", "width": 1.0}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "dr-learner", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "dr-learners", "width": 1.0}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "e[(cid:101)y\u03c6 | x = x]", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "effectiveness", "width": 0.75}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "exchangeable", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "figure 3", "width": 0.5}, {"from": "conformal meta-learners", "title": "Conformal meta-learners inherit the guarantees of CP, ensuring high probability coverage of pseudo-outcomes on test data.", "to": "guarantees of cp", "width": 1.0}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "high-probability coverage", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "inductive priors", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "ipw-theorem 2", "width": 0.5}, {"from": "conformal meta-learners", "title": "Conformal meta-learners provide valid intervals with competitive efficiency while retaining the favorable point estimation properties of CATE meta-learners.", "to": "ite", "width": 1.0}, {"from": "conformal meta-learners", "title": "developed a general framework for inference of treatment effects, dubbed conformal meta-learners, that is compatible with any machine learning model", "to": "machine learning model", "width": 1.0}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "meta-learner", "width": 0.75}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "meta-learners", "width": 1.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "model architecture", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "nuisance estimates (cid:98)\u00b50", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "oracle conformity scores", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "oracle intervals", "width": 0.75}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "outcome", "width": 0.5}, {"from": "conformal meta-learners", "title": "Conformal meta-learners issue predictive intervals for individual treatment effects using the CP procedure.", "to": "predictive intervals for ites", "width": 1.0}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "propensity score pi", "width": 0.5}, {"from": "conformal meta-learners", "title": "Pseudo-intervals are used in the analysis of the validity of conformal meta-learners. This highlights a relationship where pseudo-intervals contribute to the assessment of meta-learners\u0027 validity.,contextual proximity", "to": "pseudo-intervals", "width": 3.25}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 0.75}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "pseudo-outcomes", "width": 1.25}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "stochastic ordering framework", "width": 1.0}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "stochastic orders", "width": 1.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "stochastic orders of v\u03c6 and v \u2217", "width": 0.75}, {"from": "conformal meta-learners", "title": "Theorem provides sufficient conditions for the validity of conformal meta-learners.,contextual proximity", "to": "theorem", "width": 1.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "theorem 1", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "true ite y (1) \u2212 y (0)", "width": 0.75}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "v \u2217", "width": 0.75}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "valid end-to-end predictive inference of ites", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "v\u03c6", "width": 2.25}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "v\u2217", "width": 0.5}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "wcp variants", "width": 0.75}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "x-learner", "width": 1.0}, {"from": "conformal meta-learners", "title": "contextual proximity", "to": "\u03c4 (x)", "width": 0.5}, {"from": "conformal prediction", "title": "contextual proximity", "to": "conformity score", "width": 1.0}, {"from": "conformal prediction", "title": "contextual proximity", "to": "conformity scores", "width": 0.5}, {"from": "conformal prediction", "title": "contextual proximity", "to": "covariate", "width": 0.75}, {"from": "conformal prediction", "title": "Refers to the model- and distribution-free framework for predictive inference that provides marginal coverage guarantees.", "to": "cp", "width": 1.0}, {"from": "conformal prediction", "title": "contextual proximity", "to": "cp-based inference", "width": 0.5}, {"from": "conformal prediction", "title": "contextual proximity", "to": "interval-valued predictions", "width": 0.5}, {"from": "conformal prediction", "title": "contextual proximity", "to": "ite", "width": 1.0}, {"from": "conformal prediction", "title": "contextual proximity", "to": "ites", "width": 1.0}, {"from": "conformal prediction", "title": "framework inherits the model- and distribution-free validity of conformal prediction as well as the estimation accuracy of model-agnostic meta-learners of treatment effects", "to": "model-agnostic meta-learners", "width": 1.0}, {"from": "conformal prediction", "title": "contextual proximity", "to": "predictive inference", "width": 0.75}, {"from": "conformal prediction", "title": "contextual proximity", "to": "predictive interval", "width": 0.75}, {"from": "conformal prediction", "title": "contextual proximity", "to": "predictive intervals", "width": 0.5}, {"from": "conformal prediction", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 0.5}, {"from": "conformal prediction", "title": "contextual proximity", "to": "\u03c0(x)", "width": 0.5}, {"from": "conformal quantile regression method", "title": "contextual proximity", "to": "wcp variants", "width": 0.75}, {"from": "conformity score", "title": "contextual proximity", "to": "cp", "width": 0.75}, {"from": "conformity score", "title": "contextual proximity", "to": "cp procedure", "width": 0.75}, {"from": "conformity score", "title": "contextual proximity", "to": "exchangeability", "width": 0.75}, {"from": "conformity score", "title": "contextual proximity", "to": "fixed length", "width": 0.75}, {"from": "conformity score", "title": "contextual proximity", "to": "marginal coverage", "width": 0.75}, {"from": "conformity score", "title": "contextual proximity", "to": "ml model", "width": 0.75}, {"from": "conformity score", "title": "contextual proximity", "to": "new point", "width": 0.75}, {"from": "conformity score", "title": "contextual proximity", "to": "prediction", "width": 0.75}, {"from": "conformity score", "title": "contextual proximity", "to": "predictive interval", "width": 2.25}, {"from": "conformity score", "title": "The conformity score is defined as the signed distance between two values, calculated as the maximum of the difference or vice versa.", "to": "signed distance", "width": 1.0}, {"from": "conformity score", "title": "contextual proximity", "to": "split cp", "width": 0.75}, {"from": "conformity score", "title": "contextual proximity", "to": "training dataset", "width": 0.75}, {"from": "conformity score", "title": "contextual proximity", "to": "variant of cp", "width": 0.75}, {"from": "conformity score", "title": "contextual proximity", "to": "variant of cp procedure", "width": 0.75}, {"from": "conformity scores", "title": "The distributions of covariates influence the conformity scores in the procedure, affecting the induced distributions PV(0) and PV(1).,contextual proximity", "to": "covariates", "width": 1.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "coverage properties of cp", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "distinct characteristics", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "dr-learner", "width": 1.5}, {"from": "conformity scores", "title": "DR-learners guarantee stochastic (convex) dominance of their conformity scores regardless of the data distribution and ML model choice.,contextual proximity", "to": "dr-learners", "width": 1.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "inductive biases", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "ipw-learner", "width": 0.5}, {"from": "conformity scores", "title": "The validity of predictive intervals for ITEs is related to the conformity scores used in the procedure.,contextual proximity", "to": "ites", "width": 2.5}, {"from": "conformity scores", "title": "learner performance deteriorates when conformity scores have \u0027very strong\u0027 dominance over oracle scores,contextual proximity", "to": "learner performance", "width": 1.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "machine learning model", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "meta-learners", "width": 0.75}, {"from": "conformity scores", "title": "contextual proximity", "to": "method", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "metrics", "width": 1.25}, {"from": "conformity scores", "title": "contextual proximity", "to": "model-agnostic meta-learners", "width": 0.5}, {"from": "conformity scores", "title": "Conformity scores must satisfy stochastic ordering conditions with respect to oracle conformity scores for inference validity.", "to": "oracle conformity scores", "width": 1.0}, {"from": "conformity scores", "title": "contextual proximity", "to": "oracle score cdfs", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "oracle scores", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "predictive inference", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 1.25}, {"from": "conformity scores", "title": "contextual proximity", "to": "pseudo-outcomes", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "regression targets", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "regularization", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "theoretical framework", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "treatment effects", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "v \u2217", "width": 0.5}, {"from": "conformity scores", "title": "contextual proximity", "to": "v\u03c6", "width": 1.0}, {"from": "conformity scores", "title": "contextual proximity", "to": "x-learner", "width": 1.0}, {"from": "conformity scores", "title": "Empirical performance depends on how closely the CDF of conformity scores matches the oracle CDF.", "to": "performance", "width": 1.0}, {"from": "conformity scores", "title": "Stochastic orders are related to conformity scores in determining the meta-learners\u0027 predictive intervals\u0027 conservatism.", "to": "stochastic orders", "width": 1.0}, {"from": "conformity scores v\u03c6", "title": "Conformity scores V\u03c6 and transformed outcomes V\u2217 are not exchangeable, even though they are drawn from the same covariate distribution", "to": "transformed outcomes v\u2217", "width": 1.0}, {"from": "counter-factual outcomes", "title": "contextual proximity", "to": "cp-based inference", "width": 0.5}, {"from": "counter-factual outcomes", "title": "contextual proximity", "to": "ites", "width": 0.75}, {"from": "counter-factual outcomes", "title": "contextual proximity", "to": "predictive inference", "width": 0.5}, {"from": "counter-factual outcomes", "title": "The fundamental problem of causal inference is related to never observing counter-factual outcomes in the context of ITEs.", "to": "fundamental problem of causal inference", "width": 1.0}, {"from": "counterfactual outcome", "title": "contextual proximity", "to": "covariates", "width": 0.5}, {"from": "counterfactual outcome", "title": "contextual proximity", "to": "individual treatment effect", "width": 1.0}, {"from": "counterfactual outcome", "title": "contextual proximity", "to": "outcome", "width": 0.75}, {"from": "counterfactual outcome", "title": "contextual proximity", "to": "potential outcomes", "width": 0.5}, {"from": "counterfactual outcome", "title": "contextual proximity", "to": "treatment indicator", "width": 0.5}, {"from": "counterfactual outcome", "title": "The factual outcome (Yi) is related to the counterfactual outcome (Yi(1 - Wi)) as they represent observed and unobserved outcomes based on the treatment.", "to": "factual outcome", "width": 1.0}, {"from": "covariate", "title": "contextual proximity", "to": "covariates", "width": 0.5}, {"from": "covariate", "title": "contextual proximity", "to": "coverage band (cid:98)c(x)", "width": 0.75}, {"from": "covariate", "title": "contextual proximity", "to": "coverage condition (3)", "width": 0.75}, {"from": "covariate", "title": "contextual proximity", "to": "e[y | x = x, w = w]", "width": 0.75}, {"from": "covariate", "title": "contextual proximity", "to": "individual treatment effect", "width": 1.0}, {"from": "covariate", "title": "contextual proximity", "to": "ite", "width": 2.25}, {"from": "covariate", "title": "contextual proximity", "to": "outcome", "width": 0.75}, {"from": "covariate", "title": "contextual proximity", "to": "potential outcomes", "width": 0.5}, {"from": "covariate", "title": "contextual proximity", "to": "predictive inference", "width": 0.75}, {"from": "covariate", "title": "contextual proximity", "to": "predictive intervals", "width": 1.5}, {"from": "covariate", "title": "contextual proximity", "to": "propensity score", "width": 0.75}, {"from": "covariate", "title": "contextual proximity", "to": "px", "width": 0.75}, {"from": "covariate", "title": "contextual proximity", "to": "sample {zi = (xi, wi, yi)}n", "width": 0.75}, {"from": "covariate", "title": "contextual proximity", "to": "treatment indicator", "width": 0.5}, {"from": "covariate", "title": "contextual proximity", "to": "xj", "width": 0.75}, {"from": "covariate", "title": "contextual proximity", "to": "\u00b5w(x)", "width": 0.75}, {"from": "covariate", "title": "contextual proximity", "to": "\u03c0(x)", "width": 1.5}, {"from": "covariate shift", "title": "contextual proximity", "to": "distributions of covariates", "width": 0.5}, {"from": "covariate shift", "title": "Covariate shift breaks the exchangeability assumption necessary for the validity of CP.", "to": "exchangeability assumption", "width": 1.0}, {"from": "covariate shift", "title": "contextual proximity", "to": "factual outcomes", "width": 0.5}, {"from": "covariate shift", "title": "contextual proximity", "to": "individual subject", "width": 1.0}, {"from": "covariate shift", "title": "contextual proximity", "to": "inductive biases", "width": 0.5}, {"from": "covariate shift", "title": "ML-based CATE estimation addresses covariate shift, which can affect the generalization performance of ML models.,contextual proximity", "to": "ml-based cate estimation", "width": 2.0}, {"from": "covariate shift", "title": "contextual proximity", "to": "outcomes", "width": 1.0}, {"from": "covariate shift", "title": "contextual proximity", "to": "single function", "width": 0.5}, {"from": "covariate shift", "title": "contextual proximity", "to": "supervised learning", "width": 0.5}, {"from": "covariate shift", "title": "contextual proximity", "to": "treatments", "width": 0.5}, {"from": "covariate x", "title": "The CATE estimate is obtained by regressing the pseudo-outcome on the covariate X.,contextual proximity", "to": "pseudo-outcomes", "width": 2.25}, {"from": "covariates", "title": "contextual proximity", "to": "data generation process", "width": 0.5}, {"from": "covariates", "title": "contextual proximity", "to": "factual outcome", "width": 0.5}, {"from": "covariates", "title": "contextual proximity", "to": "individual treatment effect", "width": 2.0}, {"from": "covariates", "title": "contextual proximity", "to": "inductive biases", "width": 0.5}, {"from": "covariates", "title": "contextual proximity", "to": "ites", "width": 0.75}, {"from": "covariates", "title": "contextual proximity", "to": "outcome", "width": 1.5}, {"from": "covariates", "title": "contextual proximity", "to": "potential outcomes", "width": 1.0}, {"from": "covariates", "title": "The treatment indicator (W) is related to the covariates (X) as variables in the data generation process.,contextual proximity", "to": "treatment indicator", "width": 2.0}, {"from": "coverage", "title": "contextual proximity", "to": "cp-based inference", "width": 0.5}, {"from": "coverage", "title": "contextual proximity", "to": "discrepancy", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "dr", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "effectiveness", "width": 3.0}, {"from": "coverage", "title": "contextual proximity", "to": "empirical cdf", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "figure 4(a)", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "figure 5", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "ihdpavg. len.", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "inexactx", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "ipw", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "ites", "width": 0.75}, {"from": "coverage", "title": "contextual proximity", "to": "meta-learners", "width": 3.0}, {"from": "coverage", "title": "contextual proximity", "to": "na\u00efve", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "nlsmavg. len.", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "predictive inference", "width": 0.5}, {"from": "coverage", "title": "contextual proximity", "to": "pseudo-outcome transformations", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "rmse", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "runs", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "stochastic orders", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "synthetic generation process", "width": 1.0}, {"from": "coverage", "title": "contextual proximity", "to": "thicker tails", "width": 1.0}, {"from": "coverage band (cid:98)c(x)", "title": "The ITE band (cid:98)C(x) covers the true ITE for new test points with high probability,contextual proximity", "to": "ite", "width": 1.75}, {"from": "coverage band (cid:98)c(x)", "title": "contextual proximity", "to": "predictive intervals", "width": 0.5}, {"from": "coverage band (cid:98)c(x)", "title": "contextual proximity", "to": "\u03c0(x)", "width": 0.5}, {"from": "coverage condition (3)", "title": "contextual proximity", "to": "ite", "width": 0.75}, {"from": "coverage condition (3)", "title": "The coverage condition in (3) must be satisfied for the predictive intervals to be marginally valid,contextual proximity", "to": "predictive intervals", "width": 1.5}, {"from": "coverage condition (3)", "title": "contextual proximity", "to": "\u03c0(x)", "width": 0.5}, {"from": "coverage guarantees", "title": "contextual proximity", "to": "pseudo-intervals", "width": 0.75}, {"from": "coverage guarantees", "title": "Coverage guarantees do not immediately translate to the true Individual Treatment Effect (ITE) Y (1) \u2212 Y (0). This indicates a relationship of translation of guarantees to the actual treatment effect.", "to": "true ite y (1) \u2212 y (0)", "width": 1.0}, {"from": "coverage of ites", "title": "contextual proximity", "to": "coverage properties of cp", "width": 0.5}, {"from": "coverage of ites", "title": "contextual proximity", "to": "meta-learners", "width": 0.5}, {"from": "coverage of ites", "title": "Original CP guarantees do not necessarily guarantee coverage of ITEs.", "to": "cp guarantees", "width": 1.0}, {"from": "coverage properties of cp", "title": "contextual proximity", "to": "cp guarantees", "width": 0.5}, {"from": "coverage properties of cp", "title": "contextual proximity", "to": "doubly-robust learner [20]", "width": 0.5}, {"from": "coverage properties of cp", "title": "contextual proximity", "to": "guarantees of cp", "width": 0.5}, {"from": "coverage properties of cp", "title": "contextual proximity", "to": "individual treatment effects (ites)", "width": 0.5}, {"from": "coverage properties of cp", "title": "contextual proximity", "to": "inductive priors", "width": 0.5}, {"from": "coverage properties of cp", "title": "contextual proximity", "to": "meta-learners", "width": 1.0}, {"from": "coverage properties of cp", "title": "contextual proximity", "to": "oracle conformity scores", "width": 0.5}, {"from": "coverage properties of cp", "title": "contextual proximity", "to": "potential outcomes (po) framework", "width": 0.5}, {"from": "coverage properties of cp", "title": "Careful choice of pseudo-outcome transformation ensures that conformal meta-learners inherit the coverage properties of CP.,contextual proximity", "to": "pseudo-outcome transformation", "width": 1.5}, {"from": "coverage properties of cp", "title": "contextual proximity", "to": "re-purposing", "width": 0.5}, {"from": "coverage properties of cp", "title": "contextual proximity", "to": "unified stochastic ordering framework", "width": 0.5}, {"from": "coverage properties of cp", "title": "contextual proximity", "to": "validity of conformal meta-learners", "width": 0.5}, {"from": "coverage, efficiency, point estimation accuracy", "title": "contextual proximity", "to": "fosd", "width": 0.5}, {"from": "coverage, efficiency, point estimation accuracy", "title": "contextual proximity", "to": "ipw-learners", "width": 0.75}, {"from": "coverage, efficiency, point estimation accuracy", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "coverage, efficiency, point estimation accuracy", "title": "The performance of a predictive inference procedure can be characterized in terms of three metrics: achieved coverage for true ITEs, expected efficiency, and point estimation accuracy.", "to": "predictive inference procedure", "width": 1.0}, {"from": "cp", "title": "contextual proximity", "to": "cp procedure", "width": 0.5}, {"from": "cp", "title": "contextual proximity", "to": "predictive interval", "width": 0.75}, {"from": "cp guarantees", "title": "contextual proximity", "to": "meta-learners", "width": 0.5}, {"from": "cp procedure", "title": "contextual proximity", "to": "meta-learners", "width": 0.5}, {"from": "cp procedure", "title": "contextual proximity", "to": "model architecture", "width": 0.5}, {"from": "cp procedure", "title": "The proposed CP procedure aims to improve the predictive inference of ITEs by jointly addressing various factors and considerations in a systematic manner.", "to": "predictive inference of ites", "width": 1.0}, {"from": "cp procedure", "title": "contextual proximity", "to": "predictive interval", "width": 0.75}, {"from": "cp procedure", "title": "contextual proximity", "to": "pseudo-intervals", "width": 0.5}, {"from": "cp procedure", "title": "contextual proximity", "to": "pseudo-outcome regression", "width": 4.25}, {"from": "cp procedure", "title": "contextual proximity", "to": "two-stage pseudo-outcome regression", "width": 0.5}, {"from": "cp procedure", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "cp procedure", "title": "The CP procedure starts by splitting the training dataset into two disjoint subsets: proper training set and conformity score evaluation set.", "to": "training dataset", "width": 1.0}, {"from": "cp-based inference", "title": "contextual proximity", "to": "fundamental problem of causal inference", "width": 0.5}, {"from": "cp-based inference", "title": "contextual proximity", "to": "gaussian processes", "width": 0.5}, {"from": "cp-based inference", "title": "contextual proximity", "to": "interval-valued predictions", "width": 0.5}, {"from": "cp-based inference", "title": "contextual proximity", "to": "ite", "width": 0.5}, {"from": "cp-based inference", "title": "contextual proximity", "to": "ites", "width": 1.5}, {"from": "cp-based inference", "title": "contextual proximity", "to": "model-specific", "width": 0.5}, {"from": "cp-based inference", "title": "contextual proximity", "to": "potential outcomes", "width": 0.5}, {"from": "cp-based inference", "title": "contextual proximity", "to": "predictive inference", "width": 1.0}, {"from": "crossing point", "title": "contextual proximity", "to": "f", "width": 1.0}, {"from": "crossing point", "title": "contextual proximity", "to": "g", "width": 1.0}, {"from": "cumulative distribution functions (cdfs) f and g", "title": "contextual proximity", "to": "pseudo-intervals", "width": 0.75}, {"from": "cumulative distribution functions (cdfs) f and g", "title": "Stochastic orders involve the comparison of cumulative distribution functions F and G. This demonstrates a relationship where orders are assessed based on CDFs.", "to": "stochastic orders", "width": 1.0}, {"from": "data generation process", "title": "contextual proximity", "to": "individual treatment effect", "width": 1.0}, {"from": "data generation process", "title": "contextual proximity", "to": "outcome", "width": 0.75}, {"from": "data generation process", "title": "contextual proximity", "to": "potential outcomes", "width": 0.5}, {"from": "data generation process", "title": "contextual proximity", "to": "treatment indicator", "width": 0.5}, {"from": "data-generation process", "title": "contextual proximity", "to": "method", "width": 0.5}, {"from": "data-generation process", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 0.5}, {"from": "data-generation process", "title": "Consider a variant of the data-generation process in Section 3.6 in [1] for creating synthetic datasets.", "to": "synthetic datasets", "width": 1.0}, {"from": "dataset d", "title": "The dataset D is used to estimate the nuisance parameters \u03c6, which are then employed to transform the dataset into covariate/pseudo-outcome pairs for further analysis.", "to": "nuisance parameters \u03c6", "width": 1.0}, {"from": "dataset d", "title": "contextual proximity", "to": "pseudo-outcome regression", "width": 0.5}, {"from": "dataset d", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "datasets", "title": "contextual proximity", "to": "method", "width": 0.5}, {"from": "datasets", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 0.5}, {"from": "datasets", "title": "True ITEs are never observed in real-world datasets so conducting numerical experiments using synthetic and semi-synthetic datasets is common practice.", "to": "ites", "width": 1.0}, {"from": "decision theory", "title": "contextual proximity", "to": "f", "width": 1.0}, {"from": "decision theory", "title": "contextual proximity", "to": "g", "width": 1.0}, {"from": "decision theory", "title": "The terms \u0027Stochastic ordering\u0027 and \u0027decision theory\u0027 are related as stochastic ordering is a useful tool in decision theory to analyze decisions based on varying risk attitudes.", "to": "stochastic ordering", "width": 1.0}, {"from": "discrepancy", "title": "The effectiveness of conformal meta-learners depends on the discrepancy between the CDFs of conformity scores and oracle scores.,contextual proximity", "to": "effectiveness", "width": 1.75}, {"from": "discrepancy", "title": "contextual proximity", "to": "meta-learners", "width": 0.75}, {"from": "discrepancy between the cdfs", "title": "contextual proximity", "to": "wcp variants", "width": 0.75}, {"from": "distinct characteristics", "title": "contextual proximity", "to": "ites", "width": 0.75}, {"from": "distribution", "title": "contextual proximity", "to": "method", "width": 0.5}, {"from": "distribution", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 0.5}, {"from": "distribution", "title": "To guarantee model- and distribution-free stochastic ordering of conformity scores", "to": "model", "width": 1.0}, {"from": "distribution f", "title": "contextual proximity", "to": "f", "width": 1.0}, {"from": "distribution f", "title": "contextual proximity", "to": "g", "width": 1.0}, {"from": "distribution functions", "title": "contextual proximity", "to": "f", "width": 1.0}, {"from": "distribution functions", "title": "contextual proximity", "to": "g", "width": 1.0}, {"from": "distributions of covariates", "title": "contextual proximity", "to": "individual subject", "width": 0.5}, {"from": "distributions of covariates", "title": "contextual proximity", "to": "ml-based cate estimation", "width": 0.5}, {"from": "distributions of covariates", "title": "contextual proximity", "to": "outcomes", "width": 0.5}, {"from": "doubly-robust learner [20]", "title": "Some commonly used meta-learners, like the doubly-robust learner, satisfy a weaker dominance condition for validity.,contextual proximity", "to": "meta-learners", "width": 1.5}, {"from": "dr", "title": "contextual proximity", "to": "effectiveness", "width": 0.75}, {"from": "dr", "title": "contextual proximity", "to": "meta-learners", "width": 0.75}, {"from": "dr-learner", "title": "contextual proximity", "to": "expected length", "width": 1.0}, {"from": "dr-learner", "title": "contextual proximity", "to": "ihdp dataset", "width": 1.0}, {"from": "dr-learner", "title": "contextual proximity", "to": "inexact wcp baseline", "width": 1.0}, {"from": "dr-learner", "title": "contextual proximity", "to": "ipw-learner", "width": 0.5}, {"from": "dr-learner", "title": "contextual proximity", "to": "meta-learners", "width": 1.25}, {"from": "dr-learner", "title": "contextual proximity", "to": "metrics", "width": 5.0}, {"from": "dr-learner", "title": "contextual proximity", "to": "performance", "width": 1.0}, {"from": "dr-learner", "title": "contextual proximity", "to": "performance trends", "width": 1.0}, {"from": "dr-learner", "title": "DR-learner exhibits superior point estimation accuracy and interval efficiency in most experiments compared to all other baselines.", "to": "point estimation accuracy and interval efficiency", "width": 1.0}, {"from": "dr-learner", "title": "contextual proximity", "to": "poor performance", "width": 1.0}, {"from": "dr-learner", "title": "contextual proximity", "to": "procedure", "width": 1.0}, {"from": "dr-learner", "title": "contextual proximity", "to": "pseudo-outcome regression", "width": 0.5}, {"from": "dr-learner", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 0.5}, {"from": "dr-learner", "title": "contextual proximity", "to": "pseudo-outcomes", "width": 1.25}, {"from": "dr-learner", "title": "contextual proximity", "to": "rmse", "width": 1.0}, {"from": "dr-learner", "title": "contextual proximity", "to": "valid wcp procedures", "width": 1.0}, {"from": "dr-learner", "title": "contextual proximity", "to": "wcp variants", "width": 0.75}, {"from": "dr-learner", "title": "contextual proximity", "to": "x-learner", "width": 1.75}, {"from": "dr-learners", "title": "contextual proximity", "to": "e[(cid:101)y\u03c6 | x = x]", "width": 0.5}, {"from": "dr-learners", "title": "contextual proximity", "to": "fosd", "width": 0.5}, {"from": "dr-learners", "title": "IPW- and DR-learners satisfy a stronger FOSD condition, indicating their range of validity spans all levels of coverage.,contextual proximity", "to": "ipw-learners", "width": 1.75}, {"from": "dr-learners", "title": "contextual proximity", "to": "ipw-theorem 2", "width": 0.5}, {"from": "dr-learners", "title": "contextual proximity", "to": "nuisance estimates (cid:98)\u00b50", "width": 0.5}, {"from": "dr-learners", "title": "contextual proximity", "to": "outcome", "width": 0.5}, {"from": "dr-learners", "title": "contextual proximity", "to": "propensity score pi", "width": 0.5}, {"from": "dr-learners", "title": "contextual proximity", "to": "pseudo-outcomes", "width": 0.5}, {"from": "dr-learners", "title": "contextual proximity", "to": "valid end-to-end predictive inference of ites", "width": 0.5}, {"from": "dr-learners", "title": "contextual proximity", "to": "v\u03c6", "width": 0.5}, {"from": "dr-learners", "title": "contextual proximity", "to": "x-learner", "width": 1.5}, {"from": "dr-learners", "title": "contextual proximity", "to": "\u03c4 (x)", "width": 0.5}, {"from": "e[(cid:101)y\u03c6 | x = x]", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "e[y | x = x, w = w]", "title": "contextual proximity", "to": "ite", "width": 0.75}, {"from": "e[y | x = x, w = w]", "title": "contextual proximity", "to": "predictive intervals", "width": 0.5}, {"from": "e[y | x = x, w = w]", "title": "contextual proximity", "to": "\u03c0(x)", "width": 0.5}, {"from": "e[y | x = x, w = w]", "title": "The function \u00b5w(x) is defined as the conditional expectation of Y given X and W", "to": "\u00b5w(x)", "width": 1.0}, {"from": "effectiveness", "title": "contextual proximity", "to": "empirical cdf", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "figure 4(a)", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "figure 5", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "ihdpavg. len.", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "inexactx", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "ipw", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "meta-learners", "width": 2.25}, {"from": "effectiveness", "title": "contextual proximity", "to": "na\u00efve", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "nlsmavg. len.", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "pseudo-outcome transformations", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "rmse", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "runs", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "stochastic orders", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "synthetic generation process", "width": 0.75}, {"from": "effectiveness", "title": "contextual proximity", "to": "thicker tails", "width": 0.75}, {"from": "empirical cdf", "title": "contextual proximity", "to": "meta-learners", "width": 0.75}, {"from": "empirical cdf", "title": "Figure 4(a) depicts the empirical CDF of the conformity scores V\u03c6 and oracle scores V \u2217 for the three meta-learners under study.", "to": "figure 4(a)", "width": 1.0}, {"from": "errors in the model", "title": "Uncertainty in these estimates arises from both errors in the model and the variation of individual treatment effects (ITEs) for individuals with the same covariates.", "to": "variation of individual treatment effects (ites)", "width": 1.0}, {"from": "evaluation", "title": "contextual proximity", "to": "method", "width": 0.5}, {"from": "evaluation", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 0.5}, {"from": "exact nested wcp", "title": "Three variants of WCP in [1]: (2) Exact Nested WCP which applies WCP to plug-in estimates of ITEs in treatment and control groups followed by a secondary CP procedure.,contextual proximity", "to": "wcp variants", "width": 1.75}, {"from": "exchangeability", "title": "contextual proximity", "to": "predictive interval", "width": 0.75}, {"from": "exchangeable", "title": "contextual proximity", "to": "v\u03c6", "width": 0.5}, {"from": "exchangeable", "title": "If (Xi, Wi, Yi(0), Yi(1)), i = 1, . . . , n + 1 are exchangeable, Theorem 1 provides conditions for the validity of conformal meta-learners.", "to": "theorem 1", "width": 1.0}, {"from": "expected length", "title": "Metrics include expected length of predictive intervals.,contextual proximity", "to": "metrics", "width": 2.25}, {"from": "f", "title": "contextual proximity", "to": "fosd", "width": 1.0}, {"from": "f", "title": "contextual proximity", "to": "g", "width": 4.0}, {"from": "f", "title": "contextual proximity", "to": "meta-learners", "width": 1.0}, {"from": "f", "title": "contextual proximity", "to": "stochastic dominance", "width": 1.0}, {"from": "f", "title": "contextual proximity", "to": "stochastic ordering", "width": 1.0}, {"from": "factual outcome", "title": "contextual proximity", "to": "individual treatment effect", "width": 1.0}, {"from": "factual outcome", "title": "contextual proximity", "to": "outcome", "width": 0.75}, {"from": "factual outcome", "title": "contextual proximity", "to": "potential outcomes", "width": 0.5}, {"from": "factual outcome", "title": "contextual proximity", "to": "treatment indicator", "width": 0.5}, {"from": "factual outcomes", "title": "contextual proximity", "to": "individual subject", "width": 0.5}, {"from": "factual outcomes", "title": "contextual proximity", "to": "ml-based cate estimation", "width": 0.5}, {"from": "factual outcomes", "title": "The observed outcomes in the context are always factual, emphasizing the need to distinguish between treated and untreated outcomes.,contextual proximity", "to": "outcomes", "width": 1.5}, {"from": "figure 3", "title": "Conformal meta-learner validity is related to achieving high-probability coverage as shown in Figure 3.", "to": "high-probability coverage", "width": 1.0}, {"from": "figure 3", "title": "contextual proximity", "to": "v\u03c6", "width": 0.5}, {"from": "figure 4(a)", "title": "contextual proximity", "to": "meta-learners", "width": 0.75}, {"from": "figure 5", "title": "contextual proximity", "to": "meta-learners", "width": 0.75}, {"from": "figure 5", "title": "Figure 5 depicts stochastic orders in IHDP/NLSM evaluated across all runs.", "to": "stochastic orders", "width": 1.0}, {"from": "fixed length", "title": "The interval has a fixed length of 2QV (1\u2212\u03b1) that is independent of x.,contextual proximity", "to": "predictive interval", "width": 1.75}, {"from": "fosd", "title": "contextual proximity", "to": "g", "width": 1.0}, {"from": "fosd", "title": "contextual proximity", "to": "ipw-learners", "width": 1.5}, {"from": "fosd", "title": "contextual proximity", "to": "ite", "width": 0.5}, {"from": "fosd", "title": "contextual proximity", "to": "oracle scores", "width": 0.5}, {"from": "fosd", "title": "contextual proximity", "to": "predictive inference procedure", "width": 0.5}, {"from": "fosd", "title": "contextual proximity", "to": "stochastic order", "width": 0.5}, {"from": "fosd", "title": "contextual proximity", "to": "theorem 2", "width": 0.5}, {"from": "fosd", "title": "contextual proximity", "to": "wcp variants", "width": 0.75}, {"from": "fosd", "title": "contextual proximity", "to": "x-learner", "width": 1.0}, {"from": "fosd", "title": "IPW- and DR-learners demonstrate a robust Fraction of Strongly Discardables (FOSD) in the majority of experiments.", "to": "ipw- and dr-learners", "width": 1.0}, {"from": "fosd", "title": "The terms \u0027Stochastic dominance\u0027 and \u0027FOSD\u0027 are related as FOSD is a form of stochastic dominance where one distribution dominates another.", "to": "stochastic dominance", "width": 1.0}, {"from": "framework", "title": "contextual proximity", "to": "method", "width": 1.0}, {"from": "framework", "title": "contextual proximity", "to": "stochastic ordering", "width": 1.0}, {"from": "fundamental problem of causal inference", "title": "contextual proximity", "to": "ites", "width": 0.75}, {"from": "fundamental problem of causal inference", "title": "contextual proximity", "to": "predictive inference", "width": 0.5}, {"from": "g", "title": "contextual proximity", "to": "meta-learners", "width": 1.0}, {"from": "g", "title": "contextual proximity", "to": "stochastic dominance", "width": 1.0}, {"from": "g", "title": "contextual proximity", "to": "stochastic ordering", "width": 1.0}, {"from": "gaussian processes", "title": "contextual proximity", "to": "ites", "width": 0.75}, {"from": "gaussian processes", "title": "contextual proximity", "to": "predictive inference", "width": 0.5}, {"from": "gradient boosting", "title": "contextual proximity", "to": "wcp variants", "width": 0.75}, {"from": "guarantees of cp", "title": "contextual proximity", "to": "meta-learners", "width": 0.5}, {"from": "heterogeneity", "title": "Identifying heterogeneity in the effects of interventions across individuals is a central problem in various fields.", "to": "interventions", "width": 1.0}, {"from": "high-probability coverage", "title": "contextual proximity", "to": "v\u03c6", "width": 0.5}, {"from": "ihdp", "title": "contextual proximity", "to": "\u03b6", "width": 0.75}, {"from": "ihdp", "title": "The National Study of Learning Mindsets (NLSM) dataset and the IHDP benchmark dataset are well-known semi-synthetic datasets involving real covariates and simulated outcomes", "to": "nlsm", "width": 1.0}, {"from": "ihdp dataset", "title": "contextual proximity", "to": "metrics", "width": 1.25}, {"from": "ihdpavg. len.", "title": "contextual proximity", "to": "meta-learners", "width": 0.75}, {"from": "individual subject", "title": "contextual proximity", "to": "inductive biases", "width": 0.5}, {"from": "individual subject", "title": "contextual proximity", "to": "ml-based cate estimation", "width": 1.0}, {"from": "individual subject", "title": "Outcomes for an individual subject are the focus of the context, determining the effects of treatments on individuals.,contextual proximity", "to": "outcomes", "width": 2.0}, {"from": "individual subject", "title": "contextual proximity", "to": "single function", "width": 0.5}, {"from": "individual subject", "title": "contextual proximity", "to": "supervised learning", "width": 0.5}, {"from": "individual subject", "title": "contextual proximity", "to": "treatments", "width": 0.5}, {"from": "individual treatment effect", "title": "contextual proximity", "to": "outcome", "width": 3.0}, {"from": "individual treatment effect", "title": "contextual proximity", "to": "potential outcomes", "width": 2.0}, {"from": "individual treatment effect", "title": "contextual proximity", "to": "treatment indicator", "width": 2.0}, {"from": "individual treatment effects (ites)", "title": "contextual proximity", "to": "meta-learners", "width": 0.5}, {"from": "individual treatment effects (ites)", "title": "Predictive inference of ITEs is based on the standard PO framework with binary treatment.", "to": "potential outcomes (po) framework", "width": 1.0}, {"from": "inductive biases", "title": "contextual proximity", "to": "ites", "width": 0.75}, {"from": "inductive biases", "title": "ML-based CATE estimation focuses on incorporating inductive biases to improve the accuracy of treatment effect estimates.,contextual proximity", "to": "ml-based cate estimation", "width": 1.5}, {"from": "inductive biases", "title": "Inductive biases play a significant role in model-agnostic approaches for incorporating prior knowledge and assumptions into the predictive inference process.", "to": "model-agnostic approaches", "width": 1.0}, {"from": "inductive biases", "title": "contextual proximity", "to": "outcomes", "width": 0.5}, {"from": "inductive biases", "title": "Different inductive biases imposed by joint models of \u00b50 and \u00b51 lead to varied forms of regularization on the CATE function.", "to": "regularization", "width": 1.0}, {"from": "inductive priors", "title": "contextual proximity", "to": "meta-learners", "width": 0.5}, {"from": "inexact nested wcp", "title": "Three variants of WCP in [1]: (3) Inexact Nested WCP follows the same steps of the exact version but replaces the secondary CP with conditional quantile regression.,contextual proximity", "to": "wcp variants", "width": 1.75}, {"from": "inexact wcp baseline", "title": "contextual proximity", "to": "metrics", "width": 1.25}, {"from": "inexact wcp baseline", "title": "The inexact WCP baseline\u0027s performance trends show competitive efficiency and calibration, but lack consistency in RMSE performance under different inductive biases.", "to": "performance trends", "width": 1.0}, {"from": "inexactx", "title": "contextual proximity", "to": "meta-learners", "width": 0.75}, {"from": "inferring \u03b1\u2217", "title": "contextual proximity", "to": "method", "width": 0.5}, {"from": "inferring \u03b1\u2217", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 0.5}, {"from": "inferring \u03b1\u2217", "title": "Devising procedures for inferring \u03b1\u2217 based on observable variables or deriving theoretical upper bounds on \u03b1\u2217 are interesting directions for future work.", "to": "procedures", "width": 1.0}, {"from": "interval-valued predictions", "title": "Methods like BART and Gaussian processes can provide interval-valued predictions of ITEs through their posterior distributions.,contextual proximity", "to": "ites", "width": 2.0}, {"from": "interval-valued predictions", "title": "contextual proximity", "to": "predictive inference", "width": 0.5}, {"from": "interval-valued predictions", "title": "Quantile regression is a statistical technique used to estimate the quantiles of a probability distribution. Interval-valued predictions are predictions that provide ranges of possible values rather than point estimates.", "to": "quantile regression", "width": 1.0}, {"from": "ipw", "title": "contextual proximity", "to": "meta-learners", "width": 0.75}, {"from": "ipw- and dr-learners", "title": "contextual proximity", "to": "wcp variants", "width": 0.75}, {"from": "ipw-learner", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 0.5}, {"from": "ipw-learner", "title": "contextual proximity", "to": "pseudo-outcomes", "width": 1.25}, {"from": "ipw-learners", "title": "contextual proximity", "to": "ite", "width": 0.75}, {"from": "ipw-learners", "title": "contextual proximity", "to": "oracle scores", "width": 0.75}, {"from": "ipw-learners", "title": "contextual proximity", "to": "predictive inference procedure", "width": 0.75}, {"from": "ipw-learners", "title": "contextual proximity", "to": "stochastic order", "width": 0.75}, {"from": "ipw-learners", "title": "contextual proximity", "to": "theorem 2", "width": 0.75}, {"from": "ipw-learners", "title": "contextual proximity", "to": "x-learner", "width": 1.5}, {"from": "ipw-theorem 2", "title": "IPW-Theorem 2 states that the stochastic ordering of V\u03c6 and V* depends on the specific choice of the conformal and DR-learners.", "to": "v\u03c6", "width": 1.0}, {"from": "ipw-theorem 2", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "ite", "title": "contextual proximity", "to": "ites", "width": 0.75}, {"from": "ite", "title": "The ITE is a difference between potential outcomes for an individual subject in a causal inference context.", "to": "potential outcomes", "width": 1.0}, {"from": "ite", "title": "contextual proximity", "to": "predictive inference", "width": 1.25}, {"from": "ite", "title": "contextual proximity", "to": "predictive intervals", "width": 1.5}, {"from": "ite", "title": "contextual proximity", "to": "propensity score", "width": 0.75}, {"from": "ite", "title": "contextual proximity", "to": "px", "width": 0.75}, {"from": "ite", "title": "contextual proximity", "to": "sample {zi = (xi, wi, yi)}n", "width": 0.75}, {"from": "ite", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "ite", "title": "contextual proximity", "to": "xj", "width": 0.75}, {"from": "ite", "title": "contextual proximity", "to": "\u00b5w(x)", "width": 0.75}, {"from": "ite", "title": "contextual proximity", "to": "\u03c0(x)", "width": 1.5}, {"from": "ites", "title": "contextual proximity", "to": "method", "width": 0.5}, {"from": "ites", "title": "contextual proximity", "to": "model-specific", "width": 0.75}, {"from": "ites", "title": "contextual proximity", "to": "potential outcomes", "width": 0.75}, {"from": "ites", "title": "contextual proximity", "to": "predictive inference", "width": 2.25}, {"from": "ites", "title": "contextual proximity", "to": "regularization", "width": 0.75}, {"from": "ites", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 0.5}, {"from": "ites", "title": "The resulting intervals for POs are then combined to produce intervals for ITEs.", "to": "pos", "width": 1.0}, {"from": "learner performance", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 0.5}, {"from": "limitation", "title": "contextual proximity", "to": "method", "width": 0.5}, {"from": "limitation", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 0.5}, {"from": "machine learning model", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 0.5}, {"from": "machine learning models", "title": "Developing machine learning models to estimate heterogeneous treatment effects using observational or experimental data.", "to": "heterogeneous treatment effects", "width": 1.0}, {"from": "machine learning-based predictive inference", "title": "Machine learning-based predictive inference aims to predict individual treatment effects.", "to": "individual treatment effects", "width": 1.0}, {"from": "marginal coverage", "title": "The interval is guaranteed to satisfy marginal coverage, meaning P(Yn+1 \u2208 (cid:98)C(Xn+1)) \u2265 1\u2212\u03b1.,contextual proximity", "to": "predictive interval", "width": 1.75}, {"from": "meta-learner", "title": "The conformity score V\u03c6 of the meta-learner is compared to other scores for validity.,contextual proximity", "to": "v\u03c6", "width": 1.5}, {"from": "meta-learners", "title": "contextual proximity", "to": "metrics", "width": 1.25}, {"from": "meta-learners", "title": "contextual proximity", "to": "na\u00efve", "width": 0.75}, {"from": "meta-learners", "title": "contextual proximity", "to": "nlsmavg. len.", "width": 0.75}, {"from": "meta-learners", "title": "contextual proximity", "to": "oracle conformity scores", "width": 0.5}, {"from": "meta-learners", "title": "The semi-synthetic experiments on IHDP and NLSM datasets shed light on when meta-learners may perform poorly.", "to": "poor performance", "width": 1.0}, {"from": "meta-learners", "title": "contextual proximity", "to": "potential outcomes (po) framework", "width": 0.5}, {"from": "meta-learners", "title": "contextual proximity", "to": "pseudo-outcome regression", "width": 0.75}, {"from": "meta-learners", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 0.5}, {"from": "meta-learners", "title": "contextual proximity", "to": "pseudo-outcome transformations", "width": 0.75}, {"from": "meta-learners", "title": "contextual proximity", "to": "re-purposing", "width": 0.5}, {"from": "meta-learners", "title": "contextual proximity", "to": "rmse", "width": 1.0}, {"from": "meta-learners", "title": "contextual proximity", "to": "runs", "width": 0.75}, {"from": "meta-learners", "title": "contextual proximity", "to": "stochastic orders", "width": 0.75}, {"from": "meta-learners", "title": "contextual proximity", "to": "synthetic generation process", "width": 0.75}, {"from": "meta-learners", "title": "contextual proximity", "to": "thicker tails", "width": 0.75}, {"from": "meta-learners", "title": "contextual proximity", "to": "unified stochastic ordering framework", "width": 0.5}, {"from": "meta-learners", "title": "contextual proximity", "to": "validity of conformal meta-learners", "width": 0.5}, {"from": "meta-learners", "title": "contextual proximity", "to": "x-learner", "width": 0.75}, {"from": "method", "title": "contextual proximity", "to": "model", "width": 0.5}, {"from": "method", "title": "contextual proximity", "to": "previous work", "width": 0.5}, {"from": "method", "title": "contextual proximity", "to": "procedures", "width": 0.5}, {"from": "method", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 0.5}, {"from": "method", "title": "Stochastic ordering is used in the method to assess its validity.,contextual proximity", "to": "stochastic ordering", "width": 2.0}, {"from": "method", "title": "contextual proximity", "to": "synthetic datasets", "width": 0.5}, {"from": "method", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 1.0}, {"from": "method", "title": "introduce a new theoretical framework based on stochastic ordering to assess the validity of our method", "to": "theoretical framework", "width": 1.0}, {"from": "metrics", "title": "contextual proximity", "to": "performance", "width": 1.25}, {"from": "metrics", "title": "contextual proximity", "to": "performance trends", "width": 1.25}, {"from": "metrics", "title": "contextual proximity", "to": "poor performance", "width": 1.25}, {"from": "metrics", "title": "Procedure can be characterized in terms of three metrics: achieved coverage for true ITEs, expected length of predictive intervals, and root-mean-square error (RMSE) in CATE estimates.,contextual proximity", "to": "procedure", "width": 2.25}, {"from": "metrics", "title": "contextual proximity", "to": "rmse", "width": 1.25}, {"from": "metrics", "title": "contextual proximity", "to": "valid wcp procedures", "width": 1.25}, {"from": "metrics", "title": "contextual proximity", "to": "x-learner", "width": 1.25}, {"from": "ml model", "title": "contextual proximity", "to": "predictive interval", "width": 0.75}, {"from": "ml-based cate estimation", "title": "contextual proximity", "to": "outcomes", "width": 1.0}, {"from": "ml-based cate estimation", "title": "contextual proximity", "to": "single function", "width": 0.5}, {"from": "ml-based cate estimation", "title": "contextual proximity", "to": "supervised learning", "width": 0.5}, {"from": "ml-based cate estimation", "title": "contextual proximity", "to": "treatments", "width": 0.5}, {"from": "model", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 0.5}, {"from": "model-agnostic meta-learners", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 0.5}, {"from": "model-specific", "title": "contextual proximity", "to": "predictive inference", "width": 0.5}, {"from": "na\u00efve wcp", "title": "Three variants of WCP in [1]: (1) Na\u00efve WCP which combines the PO intervals using Bonferroni correction.,contextual proximity", "to": "wcp variants", "width": 1.75}, {"from": "new point", "title": "Describes the predictive interval at a new point with guaranteed marginal coverage.,contextual proximity", "to": "predictive interval", "width": 1.75}, {"from": "nlsm", "title": "contextual proximity", "to": "\u03b6", "width": 0.75}, {"from": "nuisance estimates", "title": "contextual proximity", "to": "pseudo-outcomes", "width": 1.25}, {"from": "nuisance estimates (cid:98)\u00b50", "title": "The achieved coverage of X-learner depends on the nuisance estimates (cid:98)\u00b50 and (cid:98)\u00b51.,contextual proximity", "to": "x-learner", "width": 1.5}, {"from": "nuisance parameters \u03c6", "title": "contextual proximity", "to": "pseudo-outcome regression", "width": 0.5}, {"from": "nuisance parameters \u03c6", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "oracle conformal prediction", "title": "The oracle conformal prediction procedure adapts the CP framework for predictive inference of ITEs by using counterfactual outcomes in a dataset.", "to": "cp framework", "width": 1.0}, {"from": "oracle intervals", "title": "The predictive intervals of conformal meta-learners are naturally more conservative than the oracle intervals.", "to": "predictive intervals", "width": 1.0}, {"from": "oracle intervals", "title": "Pseudo-intervals are compared to oracle intervals to assess their coverage. This implies a relationship where pseudo-intervals are evaluated based on oracle intervals.,contextual proximity", "to": "pseudo-intervals", "width": 1.75}, {"from": "oracle intervals", "title": "contextual proximity", "to": "stochastic orders", "width": 0.5}, {"from": "oracle intervals", "title": "contextual proximity", "to": "v \u2217", "width": 0.75}, {"from": "oracle intervals", "title": "contextual proximity", "to": "v\u03c6", "width": 0.75}, {"from": "oracle score cdfs", "title": "future work could focus on analyzing the gap between pseudo-outcome and oracle score CDFs and designing pseudo-outcome transformations that optimize efficiency while preserving stochastic orders,contextual proximity", "to": "pseudo-outcome transformation", "width": 1.5}, {"from": "oracle scores", "title": "contextual proximity", "to": "pseudo-outcome transformation", "width": 0.5}, {"from": "oracle scores", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "outcome", "title": "contextual proximity", "to": "potential outcomes", "width": 1.5}, {"from": "outcome", "title": "The treatment indicator (W) is related to the outcome (Y) as it determines the factual outcome Yi.,contextual proximity", "to": "treatment indicator", "width": 2.5}, {"from": "outcome", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "outcomes", "title": "contextual proximity", "to": "single function", "width": 0.5}, {"from": "outcomes", "title": "contextual proximity", "to": "supervised learning", "width": 0.5}, {"from": "outcomes", "title": "contextual proximity", "to": "treatments", "width": 0.5}, {"from": "point estimation accuracy and interval efficiency", "title": "contextual proximity", "to": "wcp variants", "width": 0.75}, {"from": "pos", "title": "The POs are sampled from the distribution Y (w)|X = x \u223c N (\u00b5w(x), \u03c32(x)), where w \u2208 {0, 1}", "to": "y", "width": 1.0}, {"from": "pos", "title": "contextual proximity", "to": "\u03b6", "width": 0.75}, {"from": "potential outcomes", "title": "contextual proximity", "to": "predictive inference", "width": 0.5}, {"from": "potential outcomes", "title": "contextual proximity", "to": "treatment indicator", "width": 1.0}, {"from": "prediction", "title": "contextual proximity", "to": "predictive interval", "width": 0.75}, {"from": "predictive inference", "title": "contextual proximity", "to": "predictive intervals", "width": 0.5}, {"from": "predictive inference", "title": "Pseudo-outcome regression serves as the basis for predictive inference where meta-learners are calibrated via pseudo-outcomes to generate accurate pseudo-intervals for ITEs.,contextual proximity", "to": "pseudo-outcome regression", "width": 1.5}, {"from": "predictive inference", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "predictive inference", "title": "contextual proximity", "to": "\u03c0(x)", "width": 0.5}, {"from": "predictive inference approach", "title": "We adopt a predictive inference approach to this problem, with the goal of devising valid procedures to issue predictive intervals that cover ITEs on unseen data with a predetermined probability.", "to": "quantifying uncertainty", "width": 1.0}, {"from": "predictive inference procedure", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "predictive interval", "title": "A predictive interval is constructed for a new point Xn+1 based on a target coverage of 1-\u03b1", "to": "new point xn+1", "width": 1.0}, {"from": "predictive interval", "title": "contextual proximity", "to": "split cp", "width": 0.75}, {"from": "predictive interval", "title": "contextual proximity", "to": "training dataset", "width": 0.75}, {"from": "predictive interval", "title": "contextual proximity", "to": "variant of cp", "width": 0.75}, {"from": "predictive interval", "title": "contextual proximity", "to": "variant of cp procedure", "width": 0.75}, {"from": "predictive intervals", "title": "contextual proximity", "to": "propensity score", "width": 0.5}, {"from": "predictive intervals", "title": "contextual proximity", "to": "px", "width": 0.5}, {"from": "predictive intervals", "title": "contextual proximity", "to": "sample {zi = (xi, wi, yi)}n", "width": 0.5}, {"from": "predictive intervals", "title": "contextual proximity", "to": "v \u2217", "width": 0.5}, {"from": "predictive intervals", "title": "contextual proximity", "to": "v\u03c6", "width": 0.5}, {"from": "predictive intervals", "title": "contextual proximity", "to": "wcp variants", "width": 0.75}, {"from": "predictive intervals", "title": "contextual proximity", "to": "xj", "width": 0.5}, {"from": "predictive intervals", "title": "contextual proximity", "to": "\u00b5w(x)", "width": 0.5}, {"from": "predictive intervals", "title": "contextual proximity", "to": "\u03c0(x)", "width": 1.0}, {"from": "previous work", "title": "Previous work has primarily focused on developing ML-based meta-learners for predictive inference.", "to": "development of ml-based meta-learners", "width": 1.0}, {"from": "previous work", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 0.5}, {"from": "procedures", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 0.5}, {"from": "propensity score", "title": "contextual proximity", "to": "\u03c0(x)", "width": 0.5}, {"from": "propensity score pi", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "propensity scores", "title": "contextual proximity", "to": "pseudo-outcome regression", "width": 0.5}, {"from": "propensity scores", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "pseudo-intervals", "title": "Pseudo-outcome regression is used to create pseudo-intervals in the framework.,contextual proximity", "to": "pseudo-outcome regression", "width": 2.75}, {"from": "pseudo-intervals", "title": "Certain choices of pseudo-outcomes can lead to the creation of valid pseudo-intervals for ITE inference without needing exchangeability of V\u03c6 and V \u2217. This shows a relationship of dependence between pseudo-outcomes and pseudo-intervals.,contextual proximity", "to": "pseudo-outcomes", "width": 1.75}, {"from": "pseudo-intervals", "title": "contextual proximity", "to": "stochastic ordering framework", "width": 0.75}, {"from": "pseudo-intervals", "title": "contextual proximity", "to": "stochastic orders", "width": 0.75}, {"from": "pseudo-intervals", "title": "contextual proximity", "to": "stochastic orders of v\u03c6 and v \u2217", "width": 0.75}, {"from": "pseudo-intervals", "title": "contextual proximity", "to": "true ite y (1) \u2212 y (0)", "width": 0.75}, {"from": "pseudo-intervals", "title": "contextual proximity", "to": "v \u2217", "width": 0.75}, {"from": "pseudo-intervals", "title": "contextual proximity", "to": "v\u03c6", "width": 0.75}, {"from": "pseudo-outcome regression", "title": "contextual proximity", "to": "regression", "width": 0.5}, {"from": "pseudo-outcome regression", "title": "contextual proximity", "to": "two-stage pseudo-outcome regression", "width": 1.75}, {"from": "pseudo-outcome regression", "title": "contextual proximity", "to": "x-learner", "width": 1.0}, {"from": "pseudo-outcome transformation", "title": "contextual proximity", "to": "regression targets", "width": 0.5}, {"from": "pseudo-outcome transformation", "title": "contextual proximity", "to": "theoretical framework", "width": 0.5}, {"from": "pseudo-outcome transformation", "title": "contextual proximity", "to": "treatment effects", "width": 0.5}, {"from": "pseudo-outcome transformations", "title": "Pseudo-outcome transformations that induce thicker tails in conformity scores can cause conformal meta-learners to under-perform.", "to": "thicker tails", "width": 1.0}, {"from": "pseudo-outcomes", "title": "contextual proximity", "to": "v\u03c6", "width": 0.75}, {"from": "pseudo-outcomes", "title": "X-learner pseudo-outcomes are calculated based on certain formulas involving variables W, Y, and the corresponding means.,X-learner does not use the knowledge of pi to construct its pseudo-outcomes, which affects the (distribution-free) stochastic order.,contextual proximity", "to": "x-learner", "width": 4.0}, {"from": "px", "title": "contextual proximity", "to": "\u03c0(x)", "width": 0.5}, {"from": "regression", "title": "X-learner utilizes regression coupled with specific architectures for joint modeling of(cid:98)\u00b50 and(cid:98)\u00b51, showing competitive performance for CATE estimation.,contextual proximity", "to": "x-learner", "width": 1.5}, {"from": "sample {zi = (xi, wi, yi)}n", "title": "contextual proximity", "to": "\u03c0(x)", "width": 0.5}, {"from": "setup a", "title": "contextual proximity", "to": "\u03b6", "width": 0.75}, {"from": "setup a", "title": "Setup A refers to a situation where the treatment has no effect denoted by \u03b6 = 1", "to": "\u03b6 = 1", "width": 1.0}, {"from": "setup b", "title": "contextual proximity", "to": "\u03b6", "width": 0.75}, {"from": "setup b", "title": "Setup B refers to a scenario where the treatment effects are heterogeneous denoted by \u03b6 = 0", "to": "\u03b6 = 0", "width": 1.0}, {"from": "single function", "title": "Unlike supervised learning that fits a single function using examples, models of treatment effects involve estimating nuisance parameters and indirect treatment effects.", "to": "supervised learning", "width": 1.0}, {"from": "split cp", "title": "Refers to a specific variant of CP known as split (or inductive) CP for the standard regression setup.", "to": "variant of cp", "width": 1.0}, {"from": "state-of-the-art methods", "title": "contextual proximity", "to": "wcp variants", "width": 0.75}, {"from": "state-of-the-art methods", "title": "State-of-the-art methods are based on weighted conformal prediction (WCP) proposed in [1].", "to": "weighted conformal prediction (wcp)", "width": 1.0}, {"from": "stochastic order", "title": "Theorem 2 indicates that X-learners do not guarantee a distribution-free stochastic order.,contextual proximity", "to": "x-learner", "width": 1.5}, {"from": "stochastic ordering framework", "title": "The two-stage pseudo-outcome regression is studied using a stochastic ordering framework to determine its validity.", "to": "two-stage pseudo-outcome regression", "width": 1.0}, {"from": "stochastic orders", "title": "contextual proximity", "to": "theorem 1", "width": 0.5}, {"from": "stochastic orders", "title": "contextual proximity", "to": "v \u2217", "width": 0.75}, {"from": "stochastic orders", "title": "contextual proximity", "to": "v\u03c6", "width": 1.25}, {"from": "synthetic datasets", "title": "contextual proximity", "to": "\u03b1\u2217", "width": 0.5}, {"from": "t-learner", "title": "For example, the T-learner estimates \u00b50 and \u00b51 independently using D0 and D1, while the S-learner models the treatment variable W as an additional covariate in a joint regression model \u00b5(X, W) and estimates CATE as \u03c4(x) = \u00b5(x, 1) - \u00b5(x, 0).", "to": "s-learner", "width": 1.0}, {"from": "theorem", "title": "contextual proximity", "to": "v\u03c6", "width": 0.5}, {"from": "theorem 1", "title": "contextual proximity", "to": "v \u2217", "width": 0.5}, {"from": "theorem 1", "title": "contextual proximity", "to": "v\u03c6", "width": 1.0}, {"from": "theorem 2", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "unified stochastic ordering framework", "title": "The framework is used to study the validity of conformal meta-learners in inference on ITEs.", "to": "validity of conformal meta-learners", "width": 1.0}, {"from": "v \u2217", "title": "V\u03c6 and V \u2217 are not exchangeable, even though they are drawn from the outcomes. This indicates a relationship of non-exchangeability between the two concepts.,V\u03c6 is greater than or equal to V \u2217 in a distribution-free stochastic order. This relationship satisfies the condition for the DR-learners.,The IPW- and DR-learners satisfy V\u03c6 being greater than or equal to V \u2217 by design.,contextual proximity", "to": "v\u03c6", "width": 4.25}, {"from": "valid end-to-end predictive inference of ites", "title": "contextual proximity", "to": "x-learner", "width": 0.5}, {"from": "v\u03c6", "title": "V\u03c6 is used to construct a pseudo-interval", "to": "pseudo-interval", "width": 1.0}, {"from": "v\u03c6", "title": "contextual proximity", "to": "v\u2217", "width": 0.5}, {"from": "v\u03c6", "title": "contextual proximity", "to": "x-learner", "width": 0.75}, {"from": "wcp", "title": "contextual proximity", "to": "\u03b6", "width": 0.75}, {"from": "wcp variants", "title": "contextual proximity", "to": "weighted conformal prediction (wcp)", "width": 0.75}, {"from": "x-learner", "title": "The X-learner involves a weighted sum of two regression models, as illustrated in a special case", "to": "weighted sum of two regression models", "width": 1.0}, {"from": "x-learner", "title": "contextual proximity", "to": "\u03c4 (x)", "width": 0.5}, {"from": "xj", "title": "contextual proximity", "to": "\u03c0(x)", "width": 0.5}, {"from": "y", "title": "contextual proximity", "to": "\u03b6", "width": 0.75}, {"from": "\u00b50", "title": "contextual proximity", "to": "\u03b6", "width": 0.75}, {"from": "\u00b51", "title": "contextual proximity", "to": "\u03b6", "width": 0.75}, {"from": "\u00b5w(x)", "title": "contextual proximity", "to": "\u03c0(x)", "width": 0.5}, {"from": "\u03b3", "title": "The parameter \u03b3 in the model controls the treatment effect where \u03b6 is a function given by 1/(1 + exp(\u221212(x \u2212 0.5))),contextual proximity", "to": "\u03b6", "width": 1.75}, {"from": "\u03b6", "title": "contextual proximity", "to": "\u03b6 = 0", "width": 0.75}, {"from": "\u03b6", "title": "contextual proximity", "to": "\u03b6 = 1", "width": 0.75}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "forceAtlas2Based": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.015,
+            "damping": 0.4,
+            "gravitationalConstant": -31,
+            "springConstant": 0.08,
+            "springLength": 100
+        },
+        "solver": "forceAtlas2Based",
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+                    network.on("selectNode", neighbourhoodHighlight);
+                  
+
+                  
+
+
+                  
+                      network.on("stabilizationProgress", function(params) {
+                          document.getElementById('loadingBar').removeAttribute("style");
+                          var maxWidth = 496;
+                          var minWidth = 20;
+                          var widthFactor = params.iterations/params.total;
+                          var width = Math.max(minWidth,maxWidth * widthFactor);
+                          document.getElementById('bar').style.width = width + 'px';
+                          document.getElementById('text').innerHTML = Math.round(widthFactor*100) + '%';
+                      });
+                      network.once("stabilizationIterationsDone", function() {
+                          document.getElementById('text').innerHTML = '100%';
+                          document.getElementById('bar').style.width = '496px';
+                          document.getElementById('loadingBar').style.opacity = 0;
+                          // really clean the dom element
+                          setTimeout(function () {document.getElementById('loadingBar').style.display = 'none';}, 500);
+                      });
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

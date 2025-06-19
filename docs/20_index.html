@@ -1,0 +1,999 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/css/tom-select.min.css" integrity="sha512-43fHB3GLgZfz8QXl1RPQ8O66oIgv3po9cJ5erMt1c4QISq9dYb195T3vr5ImnJPXuVroKcGBPXBFKETW8jrPNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/js/tom-select.complete.js" integrity="sha512-jeF9CfnvzDiw9G9xiksVjxR2lib44Gnovvkv+3CgCG6NXCD4gqlA5nDAVW5WjpA+i+/zKsUWV5xNEbW1X/HH0Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 900px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+             #loadingBar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width: 100%;
+                 height: 900px;
+                 background-color:rgba(200,200,200,0.8);
+                 -webkit-transition: all 0.5s ease;
+                 -moz-transition: all 0.5s ease;
+                 -ms-transition: all 0.5s ease;
+                 -o-transition: all 0.5s ease;
+                 transition: all 0.5s ease;
+                 opacity:1;
+             }
+
+             #bar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width:20px;
+                 height:20px;
+                 margin:auto auto auto auto;
+                 border-radius:11px;
+                 border:2px solid rgba(30,30,30,0.05);
+                 background: rgb(0, 173, 246); /* Old browsers */
+                 box-shadow: 2px 0px 4px rgba(0,0,0,0.4);
+             }
+
+             #border {
+                 position:absolute;
+                 top:10px;
+                 left:10px;
+                 width:500px;
+                 height:23px;
+                 margin:auto auto auto auto;
+                 box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
+                 border-radius:10px;
+             }
+
+             #text {
+                 position:absolute;
+                 top:8px;
+                 left:530px;
+                 width:30px;
+                 height:50px;
+                 margin:auto auto auto auto;
+                 font-size:22px;
+                 color: #000000;
+             }
+
+             div.outerBorder {
+                 position:relative;
+                 top:400px;
+                 width:600px;
+                 height:44px;
+                 margin:auto auto auto auto;
+                 border:8px solid rgba(0,0,0,0.1);
+                 background: rgb(252,252,252); /* Old browsers */
+                 background: -moz-linear-gradient(top,  rgba(252,252,252,1) 0%, rgba(237,237,237,1) 100%); /* FF3.6+ */
+                 background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(237,237,237,1))); /* Chrome,Safari4+ */
+                 background: -webkit-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Chrome10+,Safari5.1+ */
+                 background: -o-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Opera 11.10+ */
+                 background: -ms-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* IE10+ */
+                 background: linear-gradient(to bottom,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* W3C */
+                 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
+                 border-radius:72px;
+                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+             }
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+                <div id="select-menu" class="card-header">
+                    <div class="row no-gutters">
+                        <div class="col-10 pb-2">
+                            <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="selectNode([value]);"
+                            id="select-node"
+                            placeholder="Select node..."
+                            >
+                                <option selected>Select a Node by ID</option>
+                                
+                                    <option value="(z1)t+2 - (z1)t">(z1)t+2 - (z1)t</option>
+                                
+                                    <option value="2z1y">2z1y</option>
+                                
+                                    <option value="ratio">ratio</option>
+                                
+                                    <option value="top eigenmode">top eigenmode</option>
+                                
+                                    <option value="(∂z/∂θ), jacobian j">(∂z/∂θ), jacobian j</option>
+                                
+                                    <option value="loss l(θ)">loss l(θ)</option>
+                                
+                                    <option value="mse loss setting">mse loss setting</option>
+                                
+                                    <option value="scalar">scalar</option>
+                                
+                                    <option value="1 × p dimensional residual z">1 × p dimensional residual z</option>
+                                
+                                    <option value="jacobian j">jacobian j</option>
+                                
+                                    <option value="2">2</option>
+                                
+                                    <option value="e">e</option>
+                                
+                                    <option value="fα">fα</option>
+                                
+                                    <option value="p">p</option>
+                                
+                                    <option value="2yz">2yz</option>
+                                
+                                    <option value="spectrum">spectrum</option>
+                                
+                                    <option value="z1">z1</option>
+                                
+                                    <option value="3rd order in t (0) and 9th order in ˜z">3rd order in t (0) and 9th order in ˜z</option>
+                                
+                                    <option value="two-step dynamics">two-step dynamics</option>
+                                
+                                    <option value="dynamics">dynamics</option>
+                                
+                                    <option value="affect the dynamics">affect the dynamics</option>
+                                
+                                    <option value="η">η</option>
+                                
+                                    <option value="λmax">λmax</option>
+                                
+                                    <option value="σz">σz</option>
+                                
+                                    <option value="equation 25">equation 25</option>
+                                
+                                    <option value="attractor">attractor</option>
+                                
+                                    <option value="coefficients behavior">coefficients behavior</option>
+                                
+                                    <option value="eos behavior">eos behavior</option>
+                                
+                                    <option value="expansion">expansion</option>
+                                
+                                    <option value="structure">structure</option>
+                                
+                                    <option value="trajectories near f˜z">trajectories near f˜z</option>
+                                
+                                    <option value="y">y</option>
+                                
+                                    <option value="yon y dynamics">yon y dynamics</option>
+                                
+                                    <option value="˜z">˜z</option>
+                                
+                                    <option value="˜z2">˜z2</option>
+                                
+                                    <option value="↑">↑</option>
+                                
+                                    <option value="changes">changes</option>
+                                
+                                    <option value="small changes">small changes</option>
+                                
+                                    <option value="changing variables to y = t(0) - f˜z(˜z)">changing variables to y = t(0) - f˜z(˜z)</option>
+                                
+                                    <option value="quick concentration to a curve of near-constant, small, negative y">quick concentration to a curve of near-constant, small, negative y</option>
+                                
+                                    <option value="cifar">cifar</option>
+                                
+                                    <option value="edge of stability">edge of stability</option>
+                                
+                                    <option value="eos">eos</option>
+                                
+                                    <option value="initializations">initializations</option>
+                                
+                                    <option value="rn l">rn l</option>
+                                
+                                    <option value="˜σz">˜σz</option>
+                                
+                                    <option value="fcn">fcn</option>
+                                
+                                    <option value="cifar model">cifar model</option>
+                                
+                                    <option value="quadratic approximations">quadratic approximations</option>
+                                
+                                    <option value="simplified model">simplified model</option>
+                                
+                                    <option value="cifar10">cifar10</option>
+                                
+                                    <option value="close">close</option>
+                                
+                                    <option value="z and j">z and j</option>
+                                
+                                    <option value="convergence threshold">convergence threshold</option>
+                                
+                                    <option value="sharpness">sharpness</option>
+                                
+                                    <option value="final curvature">final curvature</option>
+                                
+                                    <option value="critical point">critical point</option>
+                                
+                                    <option value="nullclines">nullclines</option>
+                                
+                                    <option value="curvature">curvature</option>
+                                
+                                    <option value="eigenvalues">eigenvalues</option>
+                                
+                                    <option value="gradient descent">gradient descent</option>
+                                
+                                    <option value="gαi">gαi</option>
+                                
+                                    <option value="low-dimensional feedback mechanism">low-dimensional feedback mechanism</option>
+                                
+                                    <option value="moore-penrose pseudoinverse">moore-penrose pseudoinverse</option>
+                                
+                                    <option value="networks">networks</option>
+                                
+                                    <option value="progressive sharpening">progressive sharpening</option>
+                                
+                                    <option value="q">q</option>
+                                
+                                    <option value="quadratic regression models">quadratic regression models</option>
+                                
+                                    <option value="qαij">qαij</option>
+                                
+                                    <option value="trajectories">trajectories</option>
+                                
+                                    <option value="curvature for d = 1, p = 2 model">curvature for d = 1, p = 2 model</option>
+                                
+                                    <option value="eos behavior for various step sizes">eos behavior for various step sizes</option>
+                                
+                                    <option value="curvature λmax">curvature λmax</option>
+                                
+                                    <option value="cycles of sharpening">cycles of sharpening</option>
+                                
+                                    <option value="edge-of-stability behavior">edge-of-stability behavior</option>
+                                
+                                    <option value="d">d</option>
+                                
+                                    <option value="jj(cid:62)">jj(cid:62)</option>
+                                
+                                    <option value="l">l</option>
+                                
+                                    <option value="parameter space">parameter space</option>
+                                
+                                    <option value="q(j(cid:62)">q(j(cid:62)</option>
+                                
+                                    <option value="t">t</option>
+                                
+                                    <option value="theta">theta</option>
+                                
+                                    <option value="z">z</option>
+                                
+                                    <option value="||z||2">||z||2</option>
+                                
+                                    <option value="||ηj0j(cid:62)0 z0, j(cid:62)">||ηj0j(cid:62)0 z0, j(cid:62)</option>
+                                
+                                    <option value="¨λmax(0)">¨λmax(0)</option>
+                                
+                                    <option value="ηj(cid:62)t zt">ηj(cid:62)t zt</option>
+                                
+                                    <option value="θ">θ</option>
+                                
+                                    <option value="σ2">σ2</option>
+                                
+                                    <option value="ﬁnite fourth moments">ﬁnite fourth moments</option>
+                                
+                                    <option value="d = 1 model">d = 1 model</option>
+                                
+                                    <option value="initialization volume">initialization volume</option>
+                                
+                                    <option value="large d">large d</option>
+                                
+                                    <option value="learning rate">learning rate</option>
+                                
+                                    <option value="loss l">loss l</option>
+                                
+                                    <option value="machine learning models">machine learning models</option>
+                                
+                                    <option value="phenomenological model">phenomenological model</option>
+                                
+                                    <option value="d-dimensional target vector ˆy">d-dimensional target vector ˆy</option>
+                                
+                                    <option value="detail">detail</option>
+                                
+                                    <option value="differential equations">differential equations</option>
+                                
+                                    <option value="low-dimensional limit">low-dimensional limit</option>
+                                
+                                    <option value="discrete gradient descent">discrete gradient descent</option>
+                                
+                                    <option value="distance between">distance between</option>
+                                
+                                    <option value="dt (k) dt">dt (k) dt</option>
+                                
+                                    <option value="˜zt (k + 1)">˜zt (k + 1)</option>
+                                
+                                    <option value="dynamical equations">dynamical equations</option>
+                                
+                                    <option value="non-linear">non-linear</option>
+                                
+                                    <option value="dynamics is non-linear">dynamics is non-linear</option>
+                                
+                                    <option value="d˜z dt">d˜z dt</option>
+                                
+                                    <option value="˜zt (0)">˜zt (0)</option>
+                                
+                                    <option value="g + q(θ, ·)">g + q(θ, ·)</option>
+                                
+                                    <option value="gd trajectories">gd trajectories</option>
+                                
+                                    <option value="j">j</option>
+                                
+                                    <option value="j(cid:62)">j(cid:62)</option>
+                                
+                                    <option value="jq">jq</option>
+                                
+                                    <option value="jq+j(cid:62) − 2z">jq+j(cid:62) − 2z</option>
+                                
+                                    <option value="jqkj">jqkj</option>
+                                
+                                    <option value="l(·)">l(·)</option>
+                                
+                                    <option value="minima">minima</option>
+                                
+                                    <option value="q+">q+</option>
+                                
+                                    <option value="t (0)">t (0)</option>
+                                
+                                    <option value="t (k)">t (k)</option>
+                                
+                                    <option value="ηjj(cid:62)">ηjj(cid:62)</option>
+                                
+                                    <option value="experiments">experiments</option>
+                                
+                                    <option value="large learning rates">large learning rates</option>
+                                
+                                    <option value="largest eigenvalue">largest eigenvalue</option>
+                                
+                                    <option value="loss hessian">loss hessian</option>
+                                
+                                    <option value="maximum eigenvalue">maximum eigenvalue</option>
+                                
+                                    <option value="non-linear discrete dynamics">non-linear discrete dynamics</option>
+                                
+                                    <option value="ntk eigenmode">ntk eigenmode</option>
+                                
+                                    <option value="ntk eigenvalue">ntk eigenvalue</option>
+                                
+                                    <option value="phenomenology">phenomenology</option>
+                                
+                                    <option value="second-order regression">second-order regression</option>
+                                
+                                    <option value="training set residuals">training set residuals</option>
+                                
+                                    <option value="˜σj">˜σj</option>
+                                
+                                    <option value="σj">σj</option>
+                                
+                                    <option value="edge of stability (eos)">edge of stability (eos)</option>
+                                
+                                    <option value="edge of stability behavior">edge of stability behavior</option>
+                                
+                                    <option value="random quadratic regression models">random quadratic regression models</option>
+                                
+                                    <option value="edge-of-stability">edge-of-stability</option>
+                                
+                                    <option value="large dat-point, large model limit">large dat-point, large model limit</option>
+                                
+                                    <option value="stabilization of sharpness">stabilization of sharpness</option>
+                                
+                                    <option value="theoretical models">theoretical models</option>
+                                
+                                    <option value="gd">gd</option>
+                                
+                                    <option value="high-dimensional gradient-based training">high-dimensional gradient-based training</option>
+                                
+                                    <option value="edge-of-stability regime">edge-of-stability regime</option>
+                                
+                                    <option value="final deviation">final deviation</option>
+                                
+                                    <option value="eigenbasis">eigenbasis</option>
+                                
+                                    <option value="eigenvalue">eigenvalue</option>
+                                
+                                    <option value="eigendirection v1">eigendirection v1</option>
+                                
+                                    <option value="random direction">random direction</option>
+                                
+                                    <option value="eigenvector">eigenvector</option>
+                                
+                                    <option value="quadratic regression model">quadratic regression model</option>
+                                
+                                    <option value="{−1, 1}">{−1, 1}</option>
+                                
+                                    <option value="eigenvalues of q">eigenvalues of q</option>
+                                
+                                    <option value="{−ω, ω}">{−ω, ω}</option>
+                                
+                                    <option value="neural network models">neural network models</option>
+                                
+                                    <option value="maximum loss hessian eigenvalue">maximum loss hessian eigenvalue</option>
+                                
+                                    <option value="feature learning">feature learning</option>
+                                
+                                    <option value="feature learning aspects">feature learning aspects</option>
+                                
+                                    <option value="f˜z">f˜z</option>
+                                
+                                    <option value="higher order terms">higher order terms</option>
+                                
+                                    <option value="implicit equations">implicit equations</option>
+                                
+                                    <option value="models theoretically and empirically">models theoretically and empirically</option>
+                                
+                                    <option value="multinomials">multinomials</option>
+                                
+                                    <option value="polynomials">polynomials</option>
+                                
+                                    <option value="real models">real models</option>
+                                
+                                    <option value="related slow t dynamics">related slow t dynamics</option>
+                                
+                                    <option value="simplified two-parameter model">simplified two-parameter model</option>
+                                
+                                    <option value="slow z dynamics">slow z dynamics</option>
+                                
+                                    <option value="theoretical understanding">theoretical understanding</option>
+                                
+                                    <option value="training dynamics">training dynamics</option>
+                                
+                                    <option value="two step dynamics">two step dynamics</option>
+                                
+                                    <option value="existing theoretical approaches">existing theoretical approaches</option>
+                                
+                                    <option value="quantities">quantities</option>
+                                
+                                    <option value="large-width scaling regimes">large-width scaling regimes</option>
+                                
+                                    <option value="neural tangent kernel (ntk)">neural tangent kernel (ntk)</option>
+                                
+                                    <option value="function space">function space</option>
+                                
+                                    <option value="residuals z and jacobian j">residuals z and jacobian j</option>
+                                
+                                    <option value="function-space ode">function-space ode</option>
+                                
+                                    <option value="ntk">ntk</option>
+                                
+                                    <option value="gf and gd">gf and gd</option>
+                                
+                                    <option value="large step sizes">large step sizes</option>
+                                
+                                    <option value="linear least squares">linear least squares</option>
+                                
+                                    <option value="parameters">parameters</option>
+                                
+                                    <option value="gradient flow (gf) dynamics">gradient flow (gf) dynamics</option>
+                                
+                                    <option value="∂fα/∂θi">∂fα/∂θi</option>
+                                
+                                    <option value="jacobian">jacobian</option>
+                                
+                                    <option value="partial derivative">partial derivative</option>
+                                
+                                    <option value="learning dynamics">learning dynamics</option>
+                                
+                                    <option value="linear in the parameters">linear in the parameters</option>
+                                
+                                    <option value="model">model</option>
+                                
+                                    <option value="non-linearity">non-linearity</option>
+                                
+                                    <option value="ode">ode</option>
+                                
+                                    <option value="recent empirical work">recent empirical work</option>
+                                
+                                    <option value="p × p matrix q">p × p matrix q</option>
+                                
+                                    <option value="pseudoinverse">pseudoinverse</option>
+                                
+                                    <option value="residuals z">residuals z</option>
+                                
+                                    <option value="scalar ˜e">scalar ˜e</option>
+                                
+                                    <option value="∂2fα">∂2fα</option>
+                                
+                                    <option value="matrix">matrix</option>
+                                
+                                    <option value="output">output</option>
+                                
+                                    <option value="matrix q1">matrix q1</option>
+                                
+                                    <option value="matrix-vector products">matrix-vector products</option>
+                                
+                                    <option value="tensor">tensor</option>
+                                
+                                    <option value="mech">mech</option>
+                                
+                                    <option value="neural network">neural network</option>
+                                
+                                    <option value="learning algorithms">learning algorithms</option>
+                                
+                                    <option value="predictive function">predictive function</option>
+                                
+                                    <option value="non-linear dynamical contribution η2q1(jz1v1, jz1v1)">non-linear dynamical contribution η2q1(jz1v1, jz1v1)</option>
+                                
+                                    <option value="sharpening">sharpening</option>
+                                
+                                    <option value="non-linear feedback">non-linear feedback</option>
+                                
+                                    <option value="full hessian">full hessian</option>
+                                
+                                    <option value="one-step dynamics">one-step dynamics</option>
+                                
+                                    <option value="output f (x, θ)">output f (x, θ)</option>
+                                
+                                    <option value="second derivative">second derivative</option>
+                                
+                                    <option value="p=2 case">p=2 case</option>
+                                
+                                    <option value="dynamics in terms of ˜z and t(0)">dynamics in terms of ˜z and t(0)</option>
+                                
+                                    <option value="parameter vector">parameter vector</option>
+                                
+                                    <option value="phase diagram">phase diagram</option>
+                                
+                                    <option value="two parameter model">two parameter model</option>
+                                
+                                    <option value="predictive models">predictive models</option>
+                                
+                                    <option value="second-order regression models">second-order regression models</option>
+                                
+                                    <option value="quadratic models">quadratic models</option>
+                                
+                                    <option value="progressive sharpening and edge of stability">progressive sharpening and edge of stability</option>
+                                
+                                    <option value="quadratic objectives">quadratic objectives</option>
+                                
+                                    <option value="second-order regression model">second-order regression model</option>
+                                
+                                    <option value="low-dimensional features">low-dimensional features</option>
+                                
+                                    <option value="simple model">simple model</option>
+                                
+                                    <option value="top eigenvalue">top eigenvalue</option>
+                                
+                                    <option value="η2q1(jz1v1, jz1v1)">η2q1(jz1v1, jz1v1)</option>
+                                
+                                    <option value="λ1z1">λ1z1</option>
+                                
+                                    <option value="real world models">real world models</option>
+                                
+                                    <option value="theory on simplified models">theory on simplified models</option>
+                                
+                                    <option value="rescaled variables">rescaled variables</option>
+                                
+                                    <option value="second term in equation 25">second term in equation 25</option>
+                                
+                                    <option value="stabilization of λmax">stabilization of λmax</option>
+                                
+                                    <option value="short timescales">short timescales</option>
+                                
+                                    <option value="stability threshold">stability threshold</option>
+                                
+                                    <option value="y dynamics">y dynamics</option>
+                                
+                                    <option value="z2">z2</option>
+                                
+                                    <option value="λ1η">λ1η</option>
+                                
+                                    <option value="step sizes">step sizes</option>
+                                
+                                    <option value="tanh network">tanh network</option>
+                                
+                                    <option value="squared loss">squared loss</option>
+                                
+                                    <option value="training datapoint">training datapoint</option>
+                                
+                                    <option value="catapult phase dynamics">catapult phase dynamics</option>
+                                
+                                    <option value="trajectories in ˜z - t(0) space">trajectories in ˜z - t(0) space</option>
+                                
+                                    <option value="stay near the nullcline (˜z, f˜z(˜z))">stay near the nullcline (˜z, f˜z(˜z))</option>
+                                
+                            </select>
+                        </div>
+                        <div class="col-2 pb-2">
+                            <button type="button" class="btn btn-primary btn-block" onclick="neighbourhoodHighlight({nodes: []});">Reset Selection</button>
+                        </div>
+                    </div>
+                </div>
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+            <div id="loadingBar">
+              <div class="outerBorder">
+                <div id="text">0%</div>
+                <div id="border">
+                  <div id="bar"></div>
+                </div>
+              </div>
+            </div>
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+                  new TomSelect("#select-node",{
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      }
+                  });
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"group": 1, "id": "(z1)t+2 - (z1)t", "label": "(z1)t+2 - (z1)t", "shape": "dot", "size": 3}, {"group": 1, "id": "2z1y", "label": "2z1y", "shape": "dot", "size": 3}, {"group": 1, "id": "ratio", "label": "ratio", "shape": "dot", "size": 19}, {"group": 1, "id": "top eigenmode", "label": "top eigenmode", "shape": "dot", "size": 21}, {"group": 1, "id": "(\u2202z/\u2202\u03b8), jacobian j", "label": "(\u2202z/\u2202\u03b8), jacobian j", "shape": "dot", "size": 3}, {"group": 1, "id": "loss l(\u03b8)", "label": "loss l(\u03b8)", "shape": "dot", "size": 26}, {"group": 1, "id": "mse loss setting", "label": "mse loss setting", "shape": "dot", "size": 28}, {"group": 1, "id": "scalar", "label": "scalar", "shape": "dot", "size": 26}, {"group": 1, "id": "1 \u00d7 p dimensional residual z", "label": "1 \u00d7 p dimensional residual z", "shape": "dot", "size": 4}, {"group": 1, "id": "jacobian j", "label": "jacobian j", "shape": "dot", "size": 4}, {"group": 1, "id": "2", "label": "2", "shape": "dot", "size": 3}, {"group": 1, "id": "e", "label": "e", "shape": "dot", "size": 33}, {"group": 1, "id": "f\u03b1", "label": "f\u03b1", "shape": "dot", "size": 27}, {"group": 1, "id": "p", "label": "p", "shape": "dot", "size": 20}, {"group": 1, "id": "2yz", "label": "2yz", "shape": "dot", "size": 2}, {"group": 1, "id": "spectrum", "label": "spectrum", "shape": "dot", "size": 18}, {"group": 1, "id": "z1", "label": "z1", "shape": "dot", "size": 4}, {"group": 1, "id": "3rd order in t (0) and 9th order in \u02dcz", "label": "3rd order in t (0) and 9th order in \u02dcz", "shape": "dot", "size": 2}, {"group": 1, "id": "two-step dynamics", "label": "two-step dynamics", "shape": "dot", "size": 17}, {"group": 1, "id": "dynamics", "label": "dynamics", "shape": "dot", "size": 14}, {"group": 1, "id": "affect the dynamics", "label": "affect the dynamics", "shape": "dot", "size": 4}, {"group": 1, "id": "\u03b7", "label": "\u03b7", "shape": "dot", "size": 20}, {"group": 1, "id": "\u03bbmax", "label": "\u03bbmax", "shape": "dot", "size": 21}, {"group": 1, "id": "\u03c3z", "label": "\u03c3z", "shape": "dot", "size": 33}, {"group": 1, "id": "equation 25", "label": "equation 25", "shape": "dot", "size": 4}, {"group": 1, "id": "attractor", "label": "attractor", "shape": "dot", "size": 11}, {"group": 1, "id": "coefficients behavior", "label": "coefficients behavior", "shape": "dot", "size": 3}, {"group": 1, "id": "eos behavior", "label": "eos behavior", "shape": "dot", "size": 57}, {"group": 1, "id": "expansion", "label": "expansion", "shape": "dot", "size": 3}, {"group": 1, "id": "structure", "label": "structure", "shape": "dot", "size": 2}, {"group": 1, "id": "trajectories near f\u02dcz", "label": "trajectories near f\u02dcz", "shape": "dot", "size": 2}, {"group": 1, "id": "y", "label": "y", "shape": "dot", "size": 13}, {"group": 1, "id": "yon y dynamics", "label": "yon y dynamics", "shape": "dot", "size": 3}, {"group": 1, "id": "\u02dcz", "label": "\u02dcz", "shape": "dot", "size": 7}, {"group": 1, "id": "\u02dcz2", "label": "\u02dcz2", "shape": "dot", "size": 3}, {"group": 1, "id": "\u2191", "label": "\u2191", "shape": "dot", "size": 3}, {"group": 1, "id": "changes", "label": "changes", "shape": "dot", "size": 2}, {"group": 1, "id": "small changes", "label": "small changes", "shape": "dot", "size": 2}, {"group": 3, "id": "changing variables to y = t(0) - f\u02dcz(\u02dcz)", "label": "changing variables to y = t(0) - f\u02dcz(\u02dcz)", "shape": "dot", "size": 1}, {"group": 3, "id": "quick concentration to a curve of near-constant, small, negative y", "label": "quick concentration to a curve of near-constant, small, negative y", "shape": "dot", "size": 1}, {"group": 1, "id": "cifar", "label": "cifar", "shape": "dot", "size": 7}, {"group": 1, "id": "edge of stability", "label": "edge of stability", "shape": "dot", "size": 29}, {"group": 1, "id": "eos", "label": "eos", "shape": "dot", "size": 26}, {"group": 1, "id": "initializations", "label": "initializations", "shape": "dot", "size": 18}, {"group": 1, "id": "rn l", "label": "rn l", "shape": "dot", "size": 18}, {"group": 1, "id": "\u02dc\u03c3z", "label": "\u02dc\u03c3z", "shape": "dot", "size": 18}, {"group": 1, "id": "fcn", "label": "fcn", "shape": "dot", "size": 12}, {"group": 1, "id": "cifar model", "label": "cifar model", "shape": "dot", "size": 4}, {"group": 1, "id": "quadratic approximations", "label": "quadratic approximations", "shape": "dot", "size": 11}, {"group": 1, "id": "simplified model", "label": "simplified model", "shape": "dot", "size": 5}, {"group": 1, "id": "cifar10", "label": "cifar10", "shape": "dot", "size": 3}, {"group": 1, "id": "close", "label": "close", "shape": "dot", "size": 4}, {"group": 1, "id": "z and j", "label": "z and j", "shape": "dot", "size": 4}, {"group": 4, "id": "convergence threshold", "label": "convergence threshold", "shape": "dot", "size": 2}, {"group": 4, "id": "sharpness", "label": "sharpness", "shape": "dot", "size": 19}, {"group": 4, "id": "final curvature", "label": "final curvature", "shape": "dot", "size": 2}, {"group": 1, "id": "critical point", "label": "critical point", "shape": "dot", "size": 3}, {"group": 1, "id": "nullclines", "label": "nullclines", "shape": "dot", "size": 11}, {"group": 1, "id": "curvature", "label": "curvature", "shape": "dot", "size": 19}, {"group": 1, "id": "eigenvalues", "label": "eigenvalues", "shape": "dot", "size": 7}, {"group": 1, "id": "gradient descent", "label": "gradient descent", "shape": "dot", "size": 19}, {"group": 1, "id": "g\u03b1i", "label": "g\u03b1i", "shape": "dot", "size": 9}, {"group": 1, "id": "low-dimensional feedback mechanism", "label": "low-dimensional feedback mechanism", "shape": "dot", "size": 3}, {"group": 1, "id": "moore-penrose pseudoinverse", "label": "moore-penrose pseudoinverse", "shape": "dot", "size": 10}, {"group": 1, "id": "networks", "label": "networks", "shape": "dot", "size": 13}, {"group": 1, "id": "progressive sharpening", "label": "progressive sharpening", "shape": "dot", "size": 38}, {"group": 1, "id": "q", "label": "q", "shape": "dot", "size": 24}, {"group": 1, "id": "quadratic regression models", "label": "quadratic regression models", "shape": "dot", "size": 9}, {"group": 1, "id": "q\u03b1ij", "label": "q\u03b1ij", "shape": "dot", "size": 9}, {"group": 1, "id": "trajectories", "label": "trajectories", "shape": "dot", "size": 10}, {"group": 5, "id": "curvature for d = 1, p = 2 model", "label": "curvature for d = 1, p = 2 model", "shape": "dot", "size": 1}, {"group": 5, "id": "eos behavior for various step sizes", "label": "eos behavior for various step sizes", "shape": "dot", "size": 1}, {"group": 1, "id": "curvature \u03bbmax", "label": "curvature \u03bbmax", "shape": "dot", "size": 3}, {"group": 1, "id": "cycles of sharpening", "label": "cycles of sharpening", "shape": "dot", "size": 7}, {"group": 1, "id": "edge-of-stability behavior", "label": "edge-of-stability behavior", "shape": "dot", "size": 15}, {"group": 1, "id": "d", "label": "d", "shape": "dot", "size": 20}, {"group": 1, "id": "jj(cid:62)", "label": "jj(cid:62)", "shape": "dot", "size": 6}, {"group": 1, "id": "l", "label": "l", "shape": "dot", "size": 8}, {"group": 1, "id": "parameter space", "label": "parameter space", "shape": "dot", "size": 3}, {"group": 1, "id": "q(j(cid:62)", "label": "q(j(cid:62)", "shape": "dot", "size": 3}, {"group": 1, "id": "t", "label": "t", "shape": "dot", "size": 7}, {"group": 1, "id": "theta", "label": "theta", "shape": "dot", "size": 5}, {"group": 1, "id": "z", "label": "z", "shape": "dot", "size": 18}, {"group": 1, "id": "||z||2", "label": "||z||2", "shape": "dot", "size": 3}, {"group": 1, "id": "||\u03b7j0j(cid:62)0 z0, j(cid:62)", "label": "||\u03b7j0j(cid:62)0 z0, j(cid:62)", "shape": "dot", "size": 3}, {"group": 1, "id": "\u00a8\u03bbmax(0)", "label": "\u00a8\u03bbmax(0)", "shape": "dot", "size": 3}, {"group": 1, "id": "\u03b7j(cid:62)t zt", "label": "\u03b7j(cid:62)t zt", "shape": "dot", "size": 3}, {"group": 1, "id": "\u03b8", "label": "\u03b8", "shape": "dot", "size": 12}, {"group": 1, "id": "\u03c32", "label": "\u03c32", "shape": "dot", "size": 3}, {"group": 1, "id": "\ufb01nite fourth moments", "label": "\ufb01nite fourth moments", "shape": "dot", "size": 3}, {"group": 1, "id": "d = 1 model", "label": "d = 1 model", "shape": "dot", "size": 10}, {"group": 1, "id": "initialization volume", "label": "initialization volume", "shape": "dot", "size": 4}, {"group": 1, "id": "large d", "label": "large d", "shape": "dot", "size": 4}, {"group": 1, "id": "learning rate", "label": "learning rate", "shape": "dot", "size": 7}, {"group": 1, "id": "loss l", "label": "loss l", "shape": "dot", "size": 8}, {"group": 1, "id": "machine learning models", "label": "machine learning models", "shape": "dot", "size": 4}, {"group": 1, "id": "phenomenological model", "label": "phenomenological model", "shape": "dot", "size": 4}, {"group": 1, "id": "d-dimensional target vector \u02c6y", "label": "d-dimensional target vector \u02c6y", "shape": "dot", "size": 3}, {"group": 4, "id": "detail", "label": "detail", "shape": "dot", "size": 2}, {"group": 4, "id": "differential equations", "label": "differential equations", "shape": "dot", "size": 2}, {"group": 4, "id": "low-dimensional limit", "label": "low-dimensional limit", "shape": "dot", "size": 2}, {"group": 1, "id": "discrete gradient descent", "label": "discrete gradient descent", "shape": "dot", "size": 4}, {"group": 1, "id": "distance between", "label": "distance between", "shape": "dot", "size": 2}, {"group": 1, "id": "dt (k) dt", "label": "dt (k) dt", "shape": "dot", "size": 3}, {"group": 1, "id": "\u02dczt (k + 1)", "label": "\u02dczt (k + 1)", "shape": "dot", "size": 3}, {"group": 1, "id": "dynamical equations", "label": "dynamical equations", "shape": "dot", "size": 3}, {"group": 1, "id": "non-linear", "label": "non-linear", "shape": "dot", "size": 4}, {"group": 1, "id": "dynamics is non-linear", "label": "dynamics is non-linear", "shape": "dot", "size": 3}, {"group": 1, "id": "d\u02dcz dt", "label": "d\u02dcz dt", "shape": "dot", "size": 3}, {"group": 1, "id": "\u02dczt (0)", "label": "\u02dczt (0)", "shape": "dot", "size": 3}, {"group": 1, "id": "g + q(\u03b8, \u00b7)", "label": "g + q(\u03b8, \u00b7)", "shape": "dot", "size": 3}, {"group": 1, "id": "gd trajectories", "label": "gd trajectories", "shape": "dot", "size": 3}, {"group": 1, "id": "j", "label": "j", "shape": "dot", "size": 16}, {"group": 1, "id": "j(cid:62)", "label": "j(cid:62)", "shape": "dot", "size": 2}, {"group": 1, "id": "jq", "label": "jq", "shape": "dot", "size": 2}, {"group": 1, "id": "jq+j(cid:62) \u2212 2z", "label": "jq+j(cid:62) \u2212 2z", "shape": "dot", "size": 4}, {"group": 1, "id": "jqkj", "label": "jqkj", "shape": "dot", "size": 3}, {"group": 1, "id": "l(\u00b7)", "label": "l(\u00b7)", "shape": "dot", "size": 3}, {"group": 1, "id": "minima", "label": "minima", "shape": "dot", "size": 3}, {"group": 1, "id": "q+", "label": "q+", "shape": "dot", "size": 3}, {"group": 1, "id": "t (0)", "label": "t (0)", "shape": "dot", "size": 3}, {"group": 1, "id": "t (k)", "label": "t (k)", "shape": "dot", "size": 3}, {"group": 1, "id": "\u03b7jj(cid:62)", "label": "\u03b7jj(cid:62)", "shape": "dot", "size": 3}, {"group": 1, "id": "experiments", "label": "experiments", "shape": "dot", "size": 3}, {"group": 1, "id": "large learning rates", "label": "large learning rates", "shape": "dot", "size": 3}, {"group": 1, "id": "largest eigenvalue", "label": "largest eigenvalue", "shape": "dot", "size": 10}, {"group": 1, "id": "loss hessian", "label": "loss hessian", "shape": "dot", "size": 5}, {"group": 1, "id": "maximum eigenvalue", "label": "maximum eigenvalue", "shape": "dot", "size": 4}, {"group": 8, "id": "non-linear discrete dynamics", "label": "non-linear discrete dynamics", "shape": "dot", "size": 6}, {"group": 1, "id": "ntk eigenmode", "label": "ntk eigenmode", "shape": "dot", "size": 7}, {"group": 1, "id": "ntk eigenvalue", "label": "ntk eigenvalue", "shape": "dot", "size": 4}, {"group": 1, "id": "phenomenology", "label": "phenomenology", "shape": "dot", "size": 6}, {"group": 1, "id": "second-order regression", "label": "second-order regression", "shape": "dot", "size": 6}, {"group": 1, "id": "training set residuals", "label": "training set residuals", "shape": "dot", "size": 7}, {"group": 1, "id": "\u02dc\u03c3j", "label": "\u02dc\u03c3j", "shape": "dot", "size": 7}, {"group": 1, "id": "\u03c3j", "label": "\u03c3j", "shape": "dot", "size": 7}, {"group": 1, "id": "edge of stability (eos)", "label": "edge of stability (eos)", "shape": "dot", "size": 4}, {"group": 4, "id": "edge of stability behavior", "label": "edge of stability behavior", "shape": "dot", "size": 2}, {"group": 4, "id": "random quadratic regression models", "label": "random quadratic regression models", "shape": "dot", "size": 2}, {"group": 4, "id": "edge-of-stability", "label": "edge-of-stability", "shape": "dot", "size": 4}, {"group": 4, "id": "large dat-point, large model limit", "label": "large dat-point, large model limit", "shape": "dot", "size": 1}, {"group": 4, "id": "stabilization of sharpness", "label": "stabilization of sharpness", "shape": "dot", "size": 1}, {"group": 4, "id": "theoretical models", "label": "theoretical models", "shape": "dot", "size": 1}, {"group": 1, "id": "gd", "label": "gd", "shape": "dot", "size": 3}, {"group": 1, "id": "high-dimensional gradient-based training", "label": "high-dimensional gradient-based training", "shape": "dot", "size": 3}, {"group": 1, "id": "edge-of-stability regime", "label": "edge-of-stability regime", "shape": "dot", "size": 2}, {"group": 1, "id": "final deviation", "label": "final deviation", "shape": "dot", "size": 2}, {"group": 1, "id": "eigenbasis", "label": "eigenbasis", "shape": "dot", "size": 2}, {"group": 1, "id": "eigenvalue", "label": "eigenvalue", "shape": "dot", "size": 4}, {"group": 1, "id": "eigendirection v1", "label": "eigendirection v1", "shape": "dot", "size": 3}, {"group": 1, "id": "random direction", "label": "random direction", "shape": "dot", "size": 3}, {"group": 1, "id": "eigenvector", "label": "eigenvector", "shape": "dot", "size": 1}, {"group": 1, "id": "quadratic regression model", "label": "quadratic regression model", "shape": "dot", "size": 9}, {"group": 1, "id": "{\u22121, 1}", "label": "{\u22121, 1}", "shape": "dot", "size": 1}, {"group": 7, "id": "eigenvalues of q", "label": "eigenvalues of q", "shape": "dot", "size": 1}, {"group": 7, "id": "{\u2212\u03c9, \u03c9}", "label": "{\u2212\u03c9, \u03c9}", "shape": "dot", "size": 1}, {"group": 1, "id": "neural network models", "label": "neural network models", "shape": "dot", "size": 1}, {"group": 1, "id": "maximum loss hessian eigenvalue", "label": "maximum loss hessian eigenvalue", "shape": "dot", "size": 3}, {"group": 8, "id": "feature learning", "label": "feature learning", "shape": "dot", "size": 6}, {"group": 1, "id": "feature learning aspects", "label": "feature learning aspects", "shape": "dot", "size": 2}, {"group": 1, "id": "f\u02dcz", "label": "f\u02dcz", "shape": "dot", "size": 3}, {"group": 1, "id": "higher order terms", "label": "higher order terms", "shape": "dot", "size": 2}, {"group": 1, "id": "implicit equations", "label": "implicit equations", "shape": "dot", "size": 3}, {"group": 1, "id": "models theoretically and empirically", "label": "models theoretically and empirically", "shape": "dot", "size": 1}, {"group": 1, "id": "multinomials", "label": "multinomials", "shape": "dot", "size": 2}, {"group": 1, "id": "polynomials", "label": "polynomials", "shape": "dot", "size": 3}, {"group": 1, "id": "real models", "label": "real models", "shape": "dot", "size": 2}, {"group": 1, "id": "related slow t dynamics", "label": "related slow t dynamics", "shape": "dot", "size": 2}, {"group": 1, "id": "simplified two-parameter model", "label": "simplified two-parameter model", "shape": "dot", "size": 2}, {"group": 1, "id": "slow z dynamics", "label": "slow z dynamics", "shape": "dot", "size": 2}, {"group": 1, "id": "theoretical understanding", "label": "theoretical understanding", "shape": "dot", "size": 3}, {"group": 1, "id": "training dynamics", "label": "training dynamics", "shape": "dot", "size": 2}, {"group": 1, "id": "two step dynamics", "label": "two step dynamics", "shape": "dot", "size": 2}, {"group": 8, "id": "existing theoretical approaches", "label": "existing theoretical approaches", "shape": "dot", "size": 2}, {"group": 8, "id": "quantities", "label": "quantities", "shape": "dot", "size": 2}, {"group": 8, "id": "large-width scaling regimes", "label": "large-width scaling regimes", "shape": "dot", "size": 11}, {"group": 8, "id": "neural tangent kernel (ntk)", "label": "neural tangent kernel (ntk)", "shape": "dot", "size": 12}, {"group": 1, "id": "function space", "label": "function space", "shape": "dot", "size": 4}, {"group": 1, "id": "residuals z and jacobian j", "label": "residuals z and jacobian j", "shape": "dot", "size": 4}, {"group": 8, "id": "function-space ode", "label": "function-space ode", "shape": "dot", "size": 3}, {"group": 8, "id": "ntk", "label": "ntk", "shape": "dot", "size": 4}, {"group": 1, "id": "gf and gd", "label": "gf and gd", "shape": "dot", "size": 3}, {"group": 1, "id": "large step sizes", "label": "large step sizes", "shape": "dot", "size": 1}, {"group": 1, "id": "linear least squares", "label": "linear least squares", "shape": "dot", "size": 2}, {"group": 1, "id": "parameters", "label": "parameters", "shape": "dot", "size": 2}, {"group": 1, "id": "gradient flow (gf) dynamics", "label": "gradient flow (gf) dynamics", "shape": "dot", "size": 4}, {"group": 1, "id": "\u2202f\u03b1/\u2202\u03b8i", "label": "\u2202f\u03b1/\u2202\u03b8i", "shape": "dot", "size": 4}, {"group": 4, "id": "jacobian", "label": "jacobian", "shape": "dot", "size": 2}, {"group": 4, "id": "partial derivative", "label": "partial derivative", "shape": "dot", "size": 2}, {"group": 8, "id": "learning dynamics", "label": "learning dynamics", "shape": "dot", "size": 2}, {"group": 8, "id": "linear in the parameters", "label": "linear in the parameters", "shape": "dot", "size": 3}, {"group": 8, "id": "model", "label": "model", "shape": "dot", "size": 3}, {"group": 8, "id": "non-linearity", "label": "non-linearity", "shape": "dot", "size": 2}, {"group": 8, "id": "ode", "label": "ode", "shape": "dot", "size": 2}, {"group": 8, "id": "recent empirical work", "label": "recent empirical work", "shape": "dot", "size": 3}, {"group": 1, "id": "p \u00d7 p matrix q", "label": "p \u00d7 p matrix q", "shape": "dot", "size": 4}, {"group": 1, "id": "pseudoinverse", "label": "pseudoinverse", "shape": "dot", "size": 4}, {"group": 1, "id": "residuals z", "label": "residuals z", "shape": "dot", "size": 3}, {"group": 1, "id": "scalar \u02dce", "label": "scalar \u02dce", "shape": "dot", "size": 4}, {"group": 1, "id": "\u22022f\u03b1", "label": "\u22022f\u03b1", "shape": "dot", "size": 4}, {"group": 4, "id": "matrix", "label": "matrix", "shape": "dot", "size": 2}, {"group": 4, "id": "output", "label": "output", "shape": "dot", "size": 2}, {"group": 1, "id": "matrix q1", "label": "matrix q1", "shape": "dot", "size": 1}, {"group": 1, "id": "matrix-vector products", "label": "matrix-vector products", "shape": "dot", "size": 2}, {"group": 1, "id": "tensor", "label": "tensor", "shape": "dot", "size": 2}, {"group": 1, "id": "mech", "label": "mech", "shape": "dot", "size": 2}, {"group": 9, "id": "neural network", "label": "neural network", "shape": "dot", "size": 1}, {"group": 9, "id": "learning algorithms", "label": "learning algorithms", "shape": "dot", "size": 1}, {"group": 8, "id": "predictive function", "label": "predictive function", "shape": "dot", "size": 1}, {"group": 1, "id": "non-linear dynamical contribution \u03b72q1(jz1v1, jz1v1)", "label": "non-linear dynamical contribution \u03b72q1(jz1v1, jz1v1)", "shape": "dot", "size": 3}, {"group": 1, "id": "sharpening", "label": "sharpening", "shape": "dot", "size": 3}, {"group": 1, "id": "non-linear feedback", "label": "non-linear feedback", "shape": "dot", "size": 2}, {"group": 8, "id": "full hessian", "label": "full hessian", "shape": "dot", "size": 1}, {"group": 1, "id": "one-step dynamics", "label": "one-step dynamics", "shape": "dot", "size": 1}, {"group": 1, "id": "output f (x, \u03b8)", "label": "output f (x, \u03b8)", "shape": "dot", "size": 2}, {"group": 1, "id": "second derivative", "label": "second derivative", "shape": "dot", "size": 2}, {"group": 6, "id": "p=2 case", "label": "p=2 case", "shape": "dot", "size": 1}, {"group": 6, "id": "dynamics in terms of \u02dcz and t(0)", "label": "dynamics in terms of \u02dcz and t(0)", "shape": "dot", "size": 1}, {"group": 4, "id": "parameter vector", "label": "parameter vector", "shape": "dot", "size": 2}, {"group": 1, "id": "phase diagram", "label": "phase diagram", "shape": "dot", "size": 3}, {"group": 1, "id": "two parameter model", "label": "two parameter model", "shape": "dot", "size": 2}, {"group": 10, "id": "predictive models", "label": "predictive models", "shape": "dot", "size": 1}, {"group": 10, "id": "second-order regression models", "label": "second-order regression models", "shape": "dot", "size": 1}, {"group": 4, "id": "quadratic models", "label": "quadratic models", "shape": "dot", "size": 2}, {"group": 1, "id": "progressive sharpening and edge of stability", "label": "progressive sharpening and edge of stability", "shape": "dot", "size": 1}, {"group": 11, "id": "quadratic objectives", "label": "quadratic objectives", "shape": "dot", "size": 1}, {"group": 11, "id": "second-order regression model", "label": "second-order regression model", "shape": "dot", "size": 1}, {"group": 1, "id": "low-dimensional features", "label": "low-dimensional features", "shape": "dot", "size": 1}, {"group": 1, "id": "simple model", "label": "simple model", "shape": "dot", "size": 3}, {"group": 1, "id": "top eigenvalue", "label": "top eigenvalue", "shape": "dot", "size": 3}, {"group": 1, "id": "\u03b72q1(jz1v1, jz1v1)", "label": "\u03b72q1(jz1v1, jz1v1)", "shape": "dot", "size": 2}, {"group": 1, "id": "\u03bb1z1", "label": "\u03bb1z1", "shape": "dot", "size": 2}, {"group": 12, "id": "real world models", "label": "real world models", "shape": "dot", "size": 1}, {"group": 12, "id": "theory on simplified models", "label": "theory on simplified models", "shape": "dot", "size": 1}, {"group": 1, "id": "rescaled variables", "label": "rescaled variables", "shape": "dot", "size": 3}, {"group": 1, "id": "second term in equation 25", "label": "second term in equation 25", "shape": "dot", "size": 4}, {"group": 1, "id": "stabilization of \u03bbmax", "label": "stabilization of \u03bbmax", "shape": "dot", "size": 4}, {"group": 4, "id": "short timescales", "label": "short timescales", "shape": "dot", "size": 1}, {"group": 4, "id": "stability threshold", "label": "stability threshold", "shape": "dot", "size": 1}, {"group": 1, "id": "y dynamics", "label": "y dynamics", "shape": "dot", "size": 2}, {"group": 1, "id": "z2", "label": "z2", "shape": "dot", "size": 2}, {"group": 1, "id": "\u03bb1\u03b7", "label": "\u03bb1\u03b7", "shape": "dot", "size": 2}, {"group": 1, "id": "step sizes", "label": "step sizes", "shape": "dot", "size": 2}, {"group": 13, "id": "tanh network", "label": "tanh network", "shape": "dot", "size": 1}, {"group": 13, "id": "squared loss", "label": "squared loss", "shape": "dot", "size": 1}, {"group": 2, "id": "training datapoint", "label": "training datapoint", "shape": "dot", "size": 1}, {"group": 2, "id": "catapult phase dynamics", "label": "catapult phase dynamics", "shape": "dot", "size": 1}, {"group": 14, "id": "trajectories in \u02dcz - t(0) space", "label": "trajectories in \u02dcz - t(0) space", "shape": "dot", "size": 1}, {"group": 14, "id": "stay near the nullcline (\u02dcz, f\u02dcz(\u02dcz))", "label": "stay near the nullcline (\u02dcz, f\u02dcz(\u02dcz))", "shape": "dot", "size": 1}]);
+                  edges = new vis.DataSet([{"from": "(z1)t+2 - (z1)t", "title": "The two step difference and the leading order term 2z1y are mentioned, suggesting a relationship between these terms in the context.", "to": "2z1y", "width": 1.0}, {"from": "(z1)t+2 - (z1)t", "title": "contextual proximity", "to": "ratio", "width": 0.5}, {"from": "(z1)t+2 - (z1)t", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "(\u2202z/\u2202\u03b8), jacobian j", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "(\u2202z/\u2202\u03b8), jacobian j", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "(\u2202z/\u2202\u03b8), jacobian j", "title": "We will be interested in the dynamics of the scalar curvature JJ(cid:62) (the neural tangent kernel, or NTK) in terms of the scalar (\u2202z/\u2202\u03b8) and the Jacobian J.,contextual proximity", "to": "scalar", "width": 1.5}, {"from": "1 \u00d7 p dimensional residual z", "title": "The dynamics will be analyzed in terms of the 1 \u00d7 P dimensional residual z and the Jacobian J.", "to": "jacobian j", "width": 1.0}, {"from": "1 \u00d7 p dimensional residual z", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "1 \u00d7 p dimensional residual z", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "1 \u00d7 p dimensional residual z", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "2", "title": "contextual proximity", "to": "e", "width": 0.5}, {"from": "2", "title": "contextual proximity", "to": "f\u03b1", "width": 0.5}, {"from": "2", "title": "The relation P = 2 is highlighted where P is equated to the value 2.", "to": "p", "width": 1.0}, {"from": "2yz", "title": "contextual proximity", "to": "spectrum", "width": 0.5}, {"from": "2yz", "title": "Plotting the two-step dynamics of z1 versus 2yz shows a remarkable agreement.", "to": "z1", "width": 1.0}, {"from": "2z1y", "title": "contextual proximity", "to": "ratio", "width": 0.5}, {"from": "2z1y", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "3rd order in t (0) and 9th order in \u02dcz", "title": "contextual proximity", "to": "two-step dynamics", "width": 0.5}, {"from": "3rd order in t (0) and 9th order in \u02dcz", "title": "The two-step version of the dynamics is more complicated, being 3rd order in T (0) and 9th order in \u02dcz.", "to": "dynamics", "width": 1.0}, {"from": "affect the dynamics", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "affect the dynamics", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "affect the dynamics", "title": "contextual proximity", "to": "\u03c3z", "width": 0.75}, {"from": "affect the dynamics", "title": "When does \u03b72 in Equation 25 affect the dynamics", "to": "equation 25", "width": 1.0}, {"from": "attractor", "title": "contextual proximity", "to": "coefficients behavior", "width": 0.5}, {"from": "attractor", "title": "contextual proximity", "to": "dynamics", "width": 0.5}, {"from": "attractor", "title": "Trajectories appear to be approaching an attractor, suggesting the dynamics are slow near the nullclines.,contextual proximity", "to": "eos behavior", "width": 2.0}, {"from": "attractor", "title": "contextual proximity", "to": "expansion", "width": 0.5}, {"from": "attractor", "title": "contextual proximity", "to": "structure", "width": 0.5}, {"from": "attractor", "title": "contextual proximity", "to": "trajectories near f\u02dcz", "width": 0.5}, {"from": "attractor", "title": "contextual proximity", "to": "y", "width": 0.5}, {"from": "attractor", "title": "contextual proximity", "to": "yon y dynamics", "width": 0.5}, {"from": "attractor", "title": "contextual proximity", "to": "\u02dcz", "width": 0.5}, {"from": "attractor", "title": "contextual proximity", "to": "\u02dcz2", "width": 0.5}, {"from": "attractor", "title": "contextual proximity", "to": "\u2191", "width": 0.5}, {"from": "changes", "title": "contextual proximity", "to": "eos behavior", "width": 0.5}, {"from": "changes", "title": "Quantitative comparisons of small changes may help uncover any universal mechanisms or canonical forms that explain EOS behavior.", "to": "small changes", "width": 1.0}, {"from": "changing variables to y = t(0) - f\u02dcz(\u02dcz)", "title": "Shows quick convergence to a curve with a small negative y value", "to": "quick concentration to a curve of near-constant, small, negative y", "width": 1.0}, {"from": "cifar", "title": "contextual proximity", "to": "edge of stability", "width": 0.5}, {"from": "cifar", "title": "contextual proximity", "to": "eos", "width": 0.5}, {"from": "cifar", "title": "contextual proximity", "to": "initializations", "width": 0.5}, {"from": "cifar", "title": "contextual proximity", "to": "rn l", "width": 0.5}, {"from": "cifar", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 0.75}, {"from": "cifar", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}, {"from": "cifar", "title": "A FCN trained on CIFAR is mentioned", "to": "fcn", "width": 1.0}, {"from": "cifar model", "title": "Analysis of the CIFAR model supports the idea that there may be a general mechanism with a low-dimensional description that governs edge-of-stability behavior.,contextual proximity", "to": "eos behavior", "width": 2.0}, {"from": "cifar model", "title": "contextual proximity", "to": "quadratic approximations", "width": 0.5}, {"from": "cifar model", "title": "contextual proximity", "to": "simplified model", "width": 0.5}, {"from": "cifar model", "title": "In the CIFAR model, the two-step dynamics is slowly varying in both z1 and \u03bbmax.,contextual proximity", "to": "two-step dynamics", "width": 1.5}, {"from": "cifar10", "title": "contextual proximity", "to": "ratio", "width": 0.5}, {"from": "cifar10", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "cifar10", "title": "FCN trained on CIFAR10 is mentioned, indicating a relationship between the Fully Convolutional Network model and the CIFAR10 dataset.", "to": "fcn", "width": 1.0}, {"from": "close", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "close", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "close", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "close", "title": "The dynamics of z and J are close.", "to": "z and j", "width": 1.0}, {"from": "coefficients behavior", "title": "contextual proximity", "to": "eos behavior", "width": 0.5}, {"from": "coefficients behavior", "title": "The coefficients in the dynamics formulas - the coef\ufb01cient of the (cid:15)\u02dcz2t term is negative, and the coef\ufb01cient of the yt term is negative as well, suggesting contractive behavior.", "to": "yon y dynamics", "width": 1.0}, {"from": "convergence threshold", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "convergence threshold", "title": "Final curvature deviates predictably from the convergence threshold, suggesting a connection between the two terms", "to": "final curvature", "width": 1.0}, {"from": "critical point", "title": "The critical point corresponding to EOS is defined as \u02dcz = 0, T(0) = 2, and is of particular interest.", "to": "eos", "width": 1.0}, {"from": "critical point", "title": "contextual proximity", "to": "eos behavior", "width": 0.5}, {"from": "critical point", "title": "contextual proximity", "to": "nullclines", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "e", "width": 0.75}, {"from": "curvature", "title": "contextual proximity", "to": "edge of stability", "width": 0.75}, {"from": "curvature", "title": "contextual proximity", "to": "eigenvalues", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "eos behavior", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "f\u03b1", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "gradient descent", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "g\u03b1i", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "curvature", "title": "Both theoretical and realistic models suggest that the curvature is controlled by a low-dimensional feedback mechanism mediated by z^2 via Q1.", "to": "low-dimensional feedback mechanism", "width": 1.0}, {"from": "curvature", "title": "contextual proximity", "to": "moore-penrose pseudoinverse", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "networks", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.75}, {"from": "curvature", "title": "contextual proximity", "to": "q", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "quadratic approximations", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "quadratic regression models", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "q\u03b1ij", "width": 0.5}, {"from": "curvature", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "curvature", "title": "The final curvature of trajectories naturally depends on both the initialization and learning rate. Some trajectories increase their curvature before convergence, as suggested by the gradient flow analysis.,contextual proximity", "to": "trajectories", "width": 1.5}, {"from": "curvature for d = 1, p = 2 model", "title": "Plotting shows behavior for different step sizes, indicating EOS behavior", "to": "eos behavior for various step sizes", "width": 1.0}, {"from": "curvature \u03bbmax", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "curvature \u03bbmax", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "curvature \u03bbmax", "title": "\u03c3z increases, curvature \u03bbmax increases (suggested by Theorem 4.1),contextual proximity", "to": "\u03c3z", "width": 1.75}, {"from": "cycles of sharpening", "title": "contextual proximity", "to": "edge of stability", "width": 0.5}, {"from": "cycles of sharpening", "title": "Shows multiple cycles of sharpening and edge-of-stability behavior", "to": "edge-of-stability behavior", "width": 1.0}, {"from": "cycles of sharpening", "title": "contextual proximity", "to": "eos", "width": 0.5}, {"from": "cycles of sharpening", "title": "contextual proximity", "to": "initializations", "width": 0.5}, {"from": "cycles of sharpening", "title": "contextual proximity", "to": "rn l", "width": 0.5}, {"from": "cycles of sharpening", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 0.75}, {"from": "cycles of sharpening", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "e", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "jj(cid:62)", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "l", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "p", "width": 1.5}, {"from": "d", "title": "contextual proximity", "to": "parameter space", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "q", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "q(j(cid:62)", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "t", "width": 1.0}, {"from": "d", "title": "contextual proximity", "to": "theta", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "y", "width": 1.0}, {"from": "d", "title": "contextual proximity", "to": "z", "width": 1.5}, {"from": "d", "title": "contextual proximity", "to": "||z||2", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "||\u03b7j0j(cid:62)0 z0, j(cid:62)", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "\u00a8\u03bbmax(0)", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "\u03b7j(cid:62)t zt", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "\u03b8", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "\u03c32", "width": 0.5}, {"from": "d", "title": "contextual proximity", "to": "\ufb01nite fourth moments", "width": 0.5}, {"from": "d = 1 model", "title": "contextual proximity", "to": "eos", "width": 0.5}, {"from": "d = 1 model", "title": "contextual proximity", "to": "eos behavior", "width": 1.0}, {"from": "d = 1 model", "title": "contextual proximity", "to": "gradient descent", "width": 1.5}, {"from": "d = 1 model", "title": "contextual proximity", "to": "initialization volume", "width": 0.5}, {"from": "d = 1 model", "title": "contextual proximity", "to": "large d", "width": 0.5}, {"from": "d = 1 model", "title": "contextual proximity", "to": "learning rate", "width": 0.5}, {"from": "d = 1 model", "title": "contextual proximity", "to": "loss l", "width": 0.5}, {"from": "d = 1 model", "title": "contextual proximity", "to": "machine learning models", "width": 0.5}, {"from": "d = 1 model", "title": "contextual proximity", "to": "phenomenological model", "width": 0.5}, {"from": "d = 1 model", "title": "contextual proximity", "to": "progressive sharpening", "width": 1.0}, {"from": "d-dimensional target vector \u02c6y", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "d-dimensional target vector \u02c6y", "title": "The MSE loss setting focuses on the D-dimensional target vector \u02c6y.,contextual proximity", "to": "mse loss setting", "width": 1.5}, {"from": "d-dimensional target vector \u02c6y", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "detail", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "detail", "title": "The focus is on the MSE loss setting, with more details elaborated, establishing a relation between the terms", "to": "mse loss setting", "width": 1.0}, {"from": "differential equations", "title": "Differential equations in the low-dimensional limit is developed, showing a connection between the terms", "to": "low-dimensional limit", "width": 1.0}, {"from": "differential equations", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "discrete gradient descent", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "discrete gradient descent", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "discrete gradient descent", "title": "contextual proximity", "to": "\u03c3z", "width": 0.75}, {"from": "discrete gradient descent", "title": "If Q = 0, dynamics reduce to discrete gradient descent", "to": "q", "width": 1.0}, {"from": "distance between", "title": "contextual proximity", "to": "eos behavior", "width": 0.5}, {"from": "distance between", "title": "contextual proximity", "to": "nullclines", "width": 0.5}, {"from": "dt (k) dt", "title": "contextual proximity", "to": "e", "width": 0.5}, {"from": "dt (k) dt", "title": "contextual proximity", "to": "f\u03b1", "width": 0.5}, {"from": "dt (k) dt", "title": "The equation dT (k) dt= \u22122\u02dczT (k + 1) relates the dynamics of T (k) to \u02dczT (k + 1).", "to": "\u02dczt (k + 1)", "width": 1.0}, {"from": "dynamical equations", "title": "Dynamical equations can be written as \u03b7z and \u03b71/2J,contextual proximity", "to": "\u03b7", "width": 1.5}, {"from": "dynamical equations", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "dynamical equations", "title": "contextual proximity", "to": "\u03c3z", "width": 0.75}, {"from": "dynamics", "title": "contextual proximity", "to": "eos behavior", "width": 1.25}, {"from": "dynamics", "title": "We can build intuition by expanding the dynamics to lowest order in \u02dcz and y.", "to": "expansion", "width": 1.0}, {"from": "dynamics", "title": "Dynamics is non-linear with \u03c3z = O(1) (predicted by rN L)", "to": "non-linear", "width": 1.0}, {"from": "dynamics", "title": "contextual proximity", "to": "nullclines", "width": 0.5}, {"from": "dynamics", "title": "contextual proximity", "to": "q", "width": 0.5}, {"from": "dynamics", "title": "contextual proximity", "to": "spectrum", "width": 0.5}, {"from": "dynamics", "title": "contextual proximity", "to": "two-step dynamics", "width": 0.5}, {"from": "dynamics", "title": "contextual proximity", "to": "y", "width": 0.5}, {"from": "dynamics", "title": "contextual proximity", "to": "\u02dcz", "width": 0.75}, {"from": "dynamics", "title": "contextual proximity", "to": "\u03b7", "width": 0.75}, {"from": "dynamics", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "dynamics", "title": "contextual proximity", "to": "\u03c3z", "width": 0.75}, {"from": "dynamics is non-linear", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "dynamics is non-linear", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "dynamics is non-linear", "title": "As \u03c3z is O(1), dynamics is non-linear (predicted by rN L),contextual proximity", "to": "\u03c3z", "width": 1.75}, {"from": "d\u02dcz dt", "title": "contextual proximity", "to": "e", "width": 0.5}, {"from": "d\u02dcz dt", "title": "contextual proximity", "to": "f\u03b1", "width": 0.5}, {"from": "d\u02dcz dt", "title": "The equation d\u02dcz dt= \u2212\u02dczT (0) describes the dynamics where the rate of change of \u02dcz is influenced by \u02dczT (0).", "to": "\u02dczt (0)", "width": 1.0}, {"from": "e", "title": "contextual proximity", "to": "eigenvalues", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "f\u03b1", "width": 1.0}, {"from": "e", "title": "contextual proximity", "to": "g + q(\u03b8, \u00b7)", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "gd trajectories", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "g\u03b1i", "width": 0.75}, {"from": "e", "title": "contextual proximity", "to": "j", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "j(cid:62)", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "jq", "width": 0.5}, {"from": "e", "title": "In these coordinates, we have E = JQ+J(cid:62) \u2212 2z.", "to": "jq+j(cid:62) \u2212 2z", "width": 1.0}, {"from": "e", "title": "contextual proximity", "to": "jqkj", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "l(\u00b7)", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "minima", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "moore-penrose pseudoinverse", "width": 0.75}, {"from": "e", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "p", "width": 1.0}, {"from": "e", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "q", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "q+", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "q\u03b1ij", "width": 0.75}, {"from": "e", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "t (0)", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "t (k)", "width": 0.5}, {"from": "e", "title": "The expectation operator E is associated with \u00a8\u03bbmax(0) in the context of initialization.", "to": "\u00a8\u03bbmax(0)", "width": 1.0}, {"from": "e", "title": "contextual proximity", "to": "\u02dczt (0)", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "\u02dczt (k + 1)", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "\u03b7jj(cid:62)", "width": 0.5}, {"from": "e", "title": "contextual proximity", "to": "\u03b8", "width": 0.75}, {"from": "edge of stability", "title": "contextual proximity", "to": "edge-of-stability behavior", "width": 0.5}, {"from": "edge of stability", "title": "contextual proximity", "to": "eos", "width": 1.25}, {"from": "edge of stability", "title": "contextual proximity", "to": "experiments", "width": 0.75}, {"from": "edge of stability", "title": "contextual proximity", "to": "fcn", "width": 0.5}, {"from": "edge of stability", "title": "contextual proximity", "to": "initializations", "width": 1.0}, {"from": "edge of stability", "title": "contextual proximity", "to": "j", "width": 0.5}, {"from": "edge of stability", "title": "contextual proximity", "to": "large learning rates", "width": 0.75}, {"from": "edge of stability", "title": "The largest eigenvalue crosses the edge of stability multiple times,contextual proximity", "to": "largest eigenvalue", "width": 2.25}, {"from": "edge of stability", "title": "contextual proximity", "to": "learning rate", "width": 0.75}, {"from": "edge of stability", "title": "contextual proximity", "to": "loss hessian", "width": 0.75}, {"from": "edge of stability", "title": "contextual proximity", "to": "maximum eigenvalue", "width": 0.75}, {"from": "edge of stability", "title": "contextual proximity", "to": "networks", "width": 1.5}, {"from": "edge of stability", "title": "contextual proximity", "to": "non-linear discrete dynamics", "width": 0.75}, {"from": "edge of stability", "title": "contextual proximity", "to": "ntk eigenmode", "width": 0.5}, {"from": "edge of stability", "title": "In a particular low-dimensional setting, it is proven that the maximum NTK eigenvalue converges to (near) the edge of stability.,contextual proximity", "to": "ntk eigenvalue", "width": 1.75}, {"from": "edge of stability", "title": "contextual proximity", "to": "phenomenology", "width": 0.75}, {"from": "edge of stability", "title": "Empirical demonstration shows that progressive sharpening to the edge of stability occurs generically in the large datapoint, large model limit.,Progressive sharpening and edge of stability are observed to be common properties in high-dimensional, non-linear models.,contextual proximity", "to": "progressive sharpening", "width": 4.25}, {"from": "edge of stability", "title": "contextual proximity", "to": "quadratic regression models", "width": 0.75}, {"from": "edge of stability", "title": "contextual proximity", "to": "rn l", "width": 1.0}, {"from": "edge of stability", "title": "Second-order regression and edge of stability are mentioned together,contextual proximity", "to": "second-order regression", "width": 1.5}, {"from": "edge of stability", "title": "contextual proximity", "to": "training set residuals", "width": 0.5}, {"from": "edge of stability", "title": "contextual proximity", "to": "z", "width": 0.5}, {"from": "edge of stability", "title": "contextual proximity", "to": "\u02dc\u03c3j", "width": 0.5}, {"from": "edge of stability", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 1.5}, {"from": "edge of stability", "title": "contextual proximity", "to": "\u03c3j", "width": 0.5}, {"from": "edge of stability", "title": "contextual proximity", "to": "\u03c3z", "width": 1.0}, {"from": "edge of stability (eos)", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "edge of stability (eos)", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "edge of stability (eos)", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "edge of stability (eos)", "title": "Quadratic regression models lead to the edge of stability (EOS) behavior.", "to": "quadratic regression models", "width": 1.0}, {"from": "edge of stability behavior", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "edge of stability behavior", "title": "Random quadratic regression models lead to edge of stability behavior, linking the two concepts", "to": "random quadratic regression models", "width": 1.0}, {"from": "edge-of-stability", "title": "contextual proximity", "to": "large dat-point, large model limit", "width": 1.0}, {"from": "edge-of-stability", "title": "contextual proximity", "to": "sharpness", "width": 1.0}, {"from": "edge-of-stability", "title": "contextual proximity", "to": "stabilization of sharpness", "width": 1.0}, {"from": "edge-of-stability", "title": "contextual proximity", "to": "theoretical models", "width": 1.0}, {"from": "edge-of-stability behavior", "title": "contextual proximity", "to": "eos", "width": 0.5}, {"from": "edge-of-stability behavior", "title": "contextual proximity", "to": "eos behavior", "width": 0.5}, {"from": "edge-of-stability behavior", "title": "contextual proximity", "to": "fcn", "width": 0.5}, {"from": "edge-of-stability behavior", "title": "The edge-of-stability behavior is specifically associated with GD, implying specific characteristics in gradient-based models.", "to": "gd", "width": 1.0}, {"from": "edge-of-stability behavior", "title": "The edge-of-stability behavior and high-dimensional gradient-based training are common features of training non-linear models. They may exhibit similar characteristics in different settings.", "to": "high-dimensional gradient-based training", "width": 1.0}, {"from": "edge-of-stability behavior", "title": "contextual proximity", "to": "initializations", "width": 0.5}, {"from": "edge-of-stability behavior", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "edge-of-stability behavior", "title": "contextual proximity", "to": "quadratic approximations", "width": 0.5}, {"from": "edge-of-stability behavior", "title": "contextual proximity", "to": "ratio", "width": 0.5}, {"from": "edge-of-stability behavior", "title": "contextual proximity", "to": "rn l", "width": 0.5}, {"from": "edge-of-stability behavior", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "edge-of-stability behavior", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 0.75}, {"from": "edge-of-stability behavior", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}, {"from": "edge-of-stability regime", "title": "contextual proximity", "to": "eos behavior", "width": 0.5}, {"from": "edge-of-stability regime", "title": "Computing the final deviation as a function of \u03c3z, \u03c3J, and D/P remains an interesting open question in the edge-of-stability regime.", "to": "final deviation", "width": 1.0}, {"from": "eigenbasis", "title": "contextual proximity", "to": "spectrum", "width": 0.5}, {"from": "eigenbasis", "title": "During this particular EOS behavior, much like in our simplified model, the dynamics of the eigenvalue is more important than any rotation in the eigenbasis.", "to": "eigenvalue", "width": 1.0}, {"from": "eigendirection v1", "title": "Projection onto largest eigendirection v1 is compared to projection onto a random direction, showcasing the importance of directionality in the context.", "to": "random direction", "width": 1.0}, {"from": "eigendirection v1", "title": "contextual proximity", "to": "ratio", "width": 0.5}, {"from": "eigendirection v1", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "eigenvalue", "title": "The largest eigenvalue of JJ(cid:62) is approximately computed along with its corresponding eigenvector v1 using a Lanczos method.", "to": "eigenvector", "width": 1.0}, {"from": "eigenvalue", "title": "contextual proximity", "to": "quadratic regression model", "width": 0.5}, {"from": "eigenvalue", "title": "contextual proximity", "to": "spectrum", "width": 0.5}, {"from": "eigenvalues", "title": "contextual proximity", "to": "f\u03b1", "width": 0.5}, {"from": "eigenvalues", "title": "contextual proximity", "to": "gradient descent", "width": 0.5}, {"from": "eigenvalues", "title": "Q is defined with eigenvalues 1 and \u22120.1 as part of the context.,When Q has both positive and negative eigenvalues, the loss landscape is the square of a hyperbolic paraboloid, causing some trajectories to increase their curvature before convergence.,contextual proximity", "to": "q", "width": 2.5}, {"from": "eigenvalues", "title": "contextual proximity", "to": "trajectories", "width": 0.5}, {"from": "eigenvalues", "title": "Assuming eigenvalues are {-1, 1} allows rewriting dynamics in terms of \u02dcz and the curvature", "to": "{\u22121, 1}", "width": 1.0}, {"from": "eigenvalues of q", "title": "When \u02dcE = 0, the model becomes equivalent to a single hidden layer linear network", "to": "{\u2212\u03c9, \u03c9}", "width": 1.0}, {"from": "eos", "title": "contextual proximity", "to": "eos behavior", "width": 1.0}, {"from": "eos", "title": "contextual proximity", "to": "fcn", "width": 0.5}, {"from": "eos", "title": "contextual proximity", "to": "gradient descent", "width": 1.25}, {"from": "eos", "title": "contextual proximity", "to": "initializations", "width": 1.0}, {"from": "eos", "title": "contextual proximity", "to": "j", "width": 0.5}, {"from": "eos", "title": "contextual proximity", "to": "largest eigenvalue", "width": 0.5}, {"from": "eos", "title": "The EOS is a feature observed in neural network models, suggesting a relationship between them.", "to": "neural network models", "width": 1.0}, {"from": "eos", "title": "contextual proximity", "to": "ntk eigenmode", "width": 0.5}, {"from": "eos", "title": "contextual proximity", "to": "nullclines", "width": 0.5}, {"from": "eos", "title": "contextual proximity", "to": "progressive sharpening", "width": 1.25}, {"from": "eos", "title": "contextual proximity", "to": "rn l", "width": 1.0}, {"from": "eos", "title": "contextual proximity", "to": "second-order regression", "width": 0.5}, {"from": "eos", "title": "contextual proximity", "to": "training set residuals", "width": 0.5}, {"from": "eos", "title": "contextual proximity", "to": "trajectories", "width": 0.75}, {"from": "eos", "title": "contextual proximity", "to": "z", "width": 0.5}, {"from": "eos", "title": "contextual proximity", "to": "\u02dc\u03c3j", "width": 0.5}, {"from": "eos", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 1.5}, {"from": "eos", "title": "contextual proximity", "to": "\u03c3j", "width": 0.5}, {"from": "eos", "title": "contextual proximity", "to": "\u03c3z", "width": 1.0}, {"from": "eos", "title": "The EOS is defined with respect to the maximum NTK eigenvalue instead of the maximum loss Hessian eigenvalue, as discussed by Cohen et al. in 2022.", "to": "maximum loss hessian eigenvalue", "width": 1.0}, {"from": "eos behavior", "title": "contextual proximity", "to": "expansion", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "feature learning", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "feature learning aspects", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "final deviation", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "f\u02dcz", "width": 0.5}, {"from": "eos behavior", "title": "For gradient descent dynamics, we define EOS behavior as a setting where the dynamics causes \u03bbmax to remain close to the critical value 2/\u03b7,contextual proximity", "to": "gradient descent", "width": 2.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "high-dimensional gradient-based training", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "higher order terms", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "implicit equations", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "initialization volume", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "large d", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "learning rate", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "loss l", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "low-dimensional feedback mechanism", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "machine learning models", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "models theoretically and empirically", "width": 0.5}, {"from": "eos behavior", "title": "The multinomials defined for \u02dcz and T are related to the non-linear effects inducing EOS behavior.,contextual proximity", "to": "multinomials", "width": 1.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "nullclines", "width": 1.0}, {"from": "eos behavior", "title": "contextual proximity", "to": "phenomenological model", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "polynomials", "width": 0.5}, {"from": "eos behavior", "title": "One avenue for future work is to quantitatively understand progressive sharpening and EOS behavior in the quadratic regression model for large D and P.,contextual proximity", "to": "progressive sharpening", "width": 2.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "q", "width": 0.75}, {"from": "eos behavior", "title": "contextual proximity", "to": "quadratic approximations", "width": 1.0}, {"from": "eos behavior", "title": "The quadratic regression model could be used to explain some aspects of EOS behavior.,contextual proximity", "to": "quadratic regression model", "width": 1.75}, {"from": "eos behavior", "title": "contextual proximity", "to": "real models", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "related slow t dynamics", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "simplified model", "width": 1.0}, {"from": "eos behavior", "title": "contextual proximity", "to": "simplified two-parameter model", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "slow z dynamics", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "small changes", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "spectrum", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "structure", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "theoretical understanding", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "training dynamics", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "trajectories", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "trajectories near f\u02dcz", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "two step dynamics", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "two-step dynamics", "width": 1.0}, {"from": "eos behavior", "title": "contextual proximity", "to": "y", "width": 0.75}, {"from": "eos behavior", "title": "contextual proximity", "to": "yon y dynamics", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "\u02dcz", "width": 0.75}, {"from": "eos behavior", "title": "contextual proximity", "to": "\u02dcz2", "width": 0.5}, {"from": "eos behavior", "title": "contextual proximity", "to": "\u2191", "width": 0.5}, {"from": "eos behavior", "title": "The dynamics correspond to keeping Tt(0) near the value 2 as \u02dczt goes to 0", "to": "ntk eigenvalue", "width": 1.0}, {"from": "equation 25", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "equation 25", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "equation 25", "title": "contextual proximity", "to": "\u03c3z", "width": 0.75}, {"from": "existing theoretical approaches", "title": "Feature learning and existing theoretical approaches are complementary.,contextual proximity", "to": "feature learning", "width": 2.0}, {"from": "existing theoretical approaches", "title": "Quantities may provide a quantitative basis complementary to existing theoretical approaches.,contextual proximity", "to": "quantities", "width": 2.0}, {"from": "experiments", "title": "contextual proximity", "to": "networks", "width": 0.5}, {"from": "experiments", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "fcn", "title": "contextual proximity", "to": "initializations", "width": 0.5}, {"from": "fcn", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "fcn", "title": "contextual proximity", "to": "ratio", "width": 0.5}, {"from": "fcn", "title": "contextual proximity", "to": "rn l", "width": 0.5}, {"from": "fcn", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "fcn", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 0.75}, {"from": "fcn", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}, {"from": "feature learning", "title": "Other large-width scaling regimes can allow for certain types of feature learning.,contextual proximity", "to": "large-width scaling regimes", "width": 1.5}, {"from": "feature learning", "title": "contextual proximity", "to": "neural tangent kernel (ntk)", "width": 0.5}, {"from": "feature learning", "title": "Quantities play a role in feature learning.,contextual proximity", "to": "quantities", "width": 2.0}, {"from": "feature learning", "title": "Understanding how Q mediates the dynamics of J and z quantities may provide a quantitative basis for understanding feature learning in the quadratic regression model.", "to": "q", "width": 1.0}, {"from": "feature learning aspects", "title": "The analysis has not touched on the feature learning aspects of the model, where feature learning is encoded in the relationship between J and z, and in particular the relationship between z and the eigenstructure of JJ.", "to": "quadratic regression model", "width": 1.0}, {"from": "final curvature", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "function space", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "function space", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "function space", "title": "In this setting, the dynamics can be written in function space in terms of z and J alone.", "to": "residuals z and jacobian j", "width": 1.0}, {"from": "function space", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "function-space ode", "title": "contextual proximity", "to": "large-width scaling regimes", "width": 0.5}, {"from": "function-space ode", "title": "contextual proximity", "to": "neural tangent kernel (ntk)", "width": 0.5}, {"from": "function-space ode", "title": "In the NTK regime, there is a function-space ODE which allows for explicit characterization of the network outputs.", "to": "ntk", "width": 1.0}, {"from": "f\u02dcz", "title": "contextual proximity", "to": "nullclines", "width": 0.5}, {"from": "f\u02dcz", "title": "The trajectories stay near f\u02dcz, giving rise to EOS behavior.", "to": "trajectories", "width": 1.0}, {"from": "f\u03b1", "title": "contextual proximity", "to": "g + q(\u03b8, \u00b7)", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "gd trajectories", "width": 0.5}, {"from": "f\u03b1", "title": "The relation G\u03b1i =\u2202f\u03b1 \u2202\u03b8i(cid:12) is mentioned in the content.,contextual proximity", "to": "g\u03b1i", "width": 1.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "j", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "j(cid:62)", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "jq", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "jqkj", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "l(\u00b7)", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "minima", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "moore-penrose pseudoinverse", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "p", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "q", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "q+", "width": 0.5}, {"from": "f\u03b1", "title": "The relation Q\u03b1ij =\u22022f\u03b1 \u2202\u03b8i\u2202\u03b8j is discussed in the text.,contextual proximity", "to": "q\u03b1ij", "width": 1.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "t (0)", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "t (k)", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "\u02dczt (0)", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "\u02dczt (k + 1)", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "\u03b7jj(cid:62)", "width": 0.5}, {"from": "f\u03b1", "title": "contextual proximity", "to": "\u03b8", "width": 0.5}, {"from": "g + q(\u03b8, \u00b7)", "title": "The expression J = G + Q(\u03b8, \u00b7) indicates a relationship between J and the sum of G and Q.", "to": "j", "width": 1.0}, {"from": "gd", "title": "contextual proximity", "to": "ratio", "width": 0.5}, {"from": "gd", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "gd trajectories", "title": "The GD trajectories converge to minima with larger curvature as illustrated in the content.", "to": "minima", "width": 1.0}, {"from": "gf and gd", "title": "contextual proximity", "to": "ratio", "width": 0.5}, {"from": "gf and gd", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "gf and gd", "title": "The behavior of progressive sharpening is linked to both GF and GD, suggesting common features in high-dimensional gradient-based models.", "to": "progressive sharpening", "width": 1.0}, {"from": "gradient descent", "title": "contextual proximity", "to": "initialization volume", "width": 0.75}, {"from": "gradient descent", "title": "contextual proximity", "to": "large d", "width": 0.75}, {"from": "gradient descent", "title": "The recent studies indicate that gradient descent with large step sizes can lead to specific phenomena such as progressive sharpening and edge-of-stability behavior.", "to": "large step sizes", "width": 1.0}, {"from": "gradient descent", "title": "contextual proximity", "to": "learning rate", "width": 0.75}, {"from": "gradient descent", "title": "Gradient descent on linear least squares is analyzed with a large step size \u03bb.", "to": "linear least squares", "width": 1.0}, {"from": "gradient descent", "title": "contextual proximity", "to": "loss l", "width": 0.75}, {"from": "gradient descent", "title": "contextual proximity", "to": "machine learning models", "width": 0.75}, {"from": "gradient descent", "title": "contextual proximity", "to": "maximum loss hessian eigenvalue", "width": 0.5}, {"from": "gradient descent", "title": "contextual proximity", "to": "parameters", "width": 0.5}, {"from": "gradient descent", "title": "contextual proximity", "to": "phenomenological model", "width": 0.75}, {"from": "gradient descent", "title": "contextual proximity", "to": "progressive sharpening", "width": 1.5}, {"from": "gradient descent", "title": "contextual proximity", "to": "q", "width": 0.5}, {"from": "gradient descent", "title": "contextual proximity", "to": "trajectories", "width": 1.0}, {"from": "gradient descent", "title": "contextual proximity", "to": "two-step dynamics", "width": 0.5}, {"from": "gradient flow (gf) dynamics", "title": "The gradient flow (GF) dynamics of the loss L with respect to the parameters \u03b8 are described.", "to": "loss l", "width": 1.0}, {"from": "gradient flow (gf) dynamics", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "gradient flow (gf) dynamics", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "gradient flow (gf) dynamics", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "g\u03b1i", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "g\u03b1i", "title": "contextual proximity", "to": "moore-penrose pseudoinverse", "width": 0.5}, {"from": "g\u03b1i", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "g\u03b1i", "title": "contextual proximity", "to": "q\u03b1ij", "width": 0.5}, {"from": "g\u03b1i", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "g\u03b1i", "title": "G\u03b1i =\u2202f\u03b1/\u2202\u03b8i(cid:12)(cid:12)\u03b8=0 is described.", "to": "\u2202f\u03b1/\u2202\u03b8i", "width": 1.0}, {"from": "high-dimensional gradient-based training", "title": "contextual proximity", "to": "quadratic approximations", "width": 0.5}, {"from": "higher order terms", "title": "It would be useful to understand how higher order terms affect the training dynamics, particularly the details of the oscillations around y = 2.", "to": "training dynamics", "width": 1.0}, {"from": "implicit equations", "title": "contextual proximity", "to": "nullclines", "width": 0.5}, {"from": "implicit equations", "title": "The implicit equations and polynomials are related as they are cubic in f\u02dcz(\u02dcz) and fT(\u02dcz) respectively, leading to possible solutions as \u02dcz goes to 0.", "to": "polynomials", "width": 1.0}, {"from": "initialization volume", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "initializations", "title": "contextual proximity", "to": "j", "width": 0.5}, {"from": "initializations", "title": "contextual proximity", "to": "largest eigenvalue", "width": 0.5}, {"from": "initializations", "title": "contextual proximity", "to": "ntk eigenmode", "width": 0.5}, {"from": "initializations", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "initializations", "title": "contextual proximity", "to": "rn l", "width": 1.0}, {"from": "initializations", "title": "contextual proximity", "to": "second-order regression", "width": 0.5}, {"from": "initializations", "title": "contextual proximity", "to": "training set residuals", "width": 0.5}, {"from": "initializations", "title": "contextual proximity", "to": "z", "width": 0.5}, {"from": "initializations", "title": "contextual proximity", "to": "\u02dc\u03c3j", "width": 0.5}, {"from": "initializations", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 1.5}, {"from": "initializations", "title": "contextual proximity", "to": "\u03c3j", "width": 0.5}, {"from": "initializations", "title": "contextual proximity", "to": "\u03c3z", "width": 1.0}, {"from": "j", "title": "contextual proximity", "to": "jj(cid:62)", "width": 1.0}, {"from": "j", "title": "contextual proximity", "to": "l", "width": 1.0}, {"from": "j", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "j", "title": "contextual proximity", "to": "q", "width": 1.25}, {"from": "j", "title": "contextual proximity", "to": "rn l", "width": 0.5}, {"from": "j", "title": "contextual proximity", "to": "z", "width": 2.25}, {"from": "j", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 1.75}, {"from": "j", "title": "contextual proximity", "to": "\u03b8", "width": 1.25}, {"from": "j", "title": "contextual proximity", "to": "\u03bbmax", "width": 1.0}, {"from": "j", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}, {"from": "jacobian", "title": "The Jacobian is obtained using partial derivatives, establishing a relationship between the terms", "to": "partial derivative", "width": 1.0}, {"from": "jacobian", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "jacobian j", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "jacobian j", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "jacobian j", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "jj(cid:62)", "title": "contextual proximity", "to": "p", "width": 0.5}, {"from": "jj(cid:62)", "title": "The vector z is related to the matrix JJ(cid:62) through the maximum eigenvalue \u03bbmax in the study of dynamics,contextual proximity", "to": "z", "width": 1.75}, {"from": "jj(cid:62)", "title": "contextual proximity", "to": "\u03b8", "width": 0.5}, {"from": "jj(cid:62)", "title": "The largest eigenvalue of matrix JJ(cid:62) is denoted as \u03bbmax in the context.,contextual proximity", "to": "\u03bbmax", "width": 1.5}, {"from": "jq+j(cid:62) \u2212 2z", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "jq+j(cid:62) \u2212 2z", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "jq+j(cid:62) \u2212 2z", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "jqkj", "title": "The definition T (k) = \u03b7JQkJ(cid:62) implies a connection between T and JQJ.", "to": "t (k)", "width": 1.0}, {"from": "l", "title": "contextual proximity", "to": "q", "width": 0.5}, {"from": "l", "title": "contextual proximity", "to": "t", "width": 0.5}, {"from": "l", "title": "contextual proximity", "to": "y", "width": 0.5}, {"from": "l", "title": "contextual proximity", "to": "z", "width": 1.0}, {"from": "l", "title": "The gradient flow dynamics on an MSE loss function L can be written generally as theta = -\u2202L(z)/\u2202\u03b8 = -J(cid:62)z.", "to": "theta", "width": 1.0}, {"from": "l", "title": "The term \u03b8 is related to the term L through the negative partial derivative \u2202L(z) with respect to \u03b8", "to": "\u03b8", "width": 1.0}, {"from": "l(\u00b7)", "title": "The loss landscape L(\u00b7) is a function of the parameters \u03b8 as mentioned in the context.", "to": "\u03b8", "width": 1.0}, {"from": "large d", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "large learning rates", "title": "Training practical networks with large learning rates leads to the highlighted phenomena from non-linear discrete dynamics.,contextual proximity", "to": "networks", "width": 1.5}, {"from": "large learning rates", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "large-width scaling regimes", "title": "contextual proximity", "to": "learning dynamics", "width": 0.5}, {"from": "large-width scaling regimes", "title": "contextual proximity", "to": "linear in the parameters", "width": 0.5}, {"from": "large-width scaling regimes", "title": "contextual proximity", "to": "model", "width": 0.5}, {"from": "large-width scaling regimes", "title": "contextual proximity", "to": "neural tangent kernel (ntk)", "width": 1.0}, {"from": "large-width scaling regimes", "title": "contextual proximity", "to": "non-linear discrete dynamics", "width": 0.5}, {"from": "large-width scaling regimes", "title": "contextual proximity", "to": "non-linearity", "width": 0.5}, {"from": "large-width scaling regimes", "title": "contextual proximity", "to": "ntk", "width": 0.5}, {"from": "large-width scaling regimes", "title": "contextual proximity", "to": "ode", "width": 0.5}, {"from": "large-width scaling regimes", "title": "contextual proximity", "to": "recent empirical work", "width": 0.5}, {"from": "largest eigenvalue", "title": "There is an initial increase observed in the largest eigenvalue of the loss Hessian, leading to progressive sharpening and stabilization near the maximum value.,contextual proximity", "to": "loss hessian", "width": 1.5}, {"from": "largest eigenvalue", "title": "contextual proximity", "to": "networks", "width": 0.5}, {"from": "largest eigenvalue", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.75}, {"from": "largest eigenvalue", "title": "contextual proximity", "to": "rn l", "width": 0.5}, {"from": "largest eigenvalue", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 0.75}, {"from": "largest eigenvalue", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}, {"from": "largest eigenvalue", "title": "The maximum eigenvalue of the loss Hessian stabilizes at a value equal to roughly two divided by the learning rate, corresponding to the largest eigenvalue for which gradient descent would converge in a quadratic potential.", "to": "learning rate", "width": 1.0}, {"from": "learning dynamics", "title": "The NTK controls the learning dynamics, describing the learning dynamics of all networks over short enough time horizons.,contextual proximity", "to": "neural tangent kernel (ntk)", "width": 1.5}, {"from": "learning rate", "title": "contextual proximity", "to": "networks", "width": 0.5}, {"from": "learning rate", "title": "contextual proximity", "to": "progressive sharpening", "width": 1.0}, {"from": "linear in the parameters", "title": "contextual proximity", "to": "neural tangent kernel (ntk)", "width": 0.5}, {"from": "linear in the parameters", "title": "The model is linear in the parameters, so it describes a regime with relatively trivial dynamics that cannot capture feature learning.", "to": "model", "width": 1.0}, {"from": "linear least squares", "title": "contextual proximity", "to": "two-step dynamics", "width": 0.5}, {"from": "loss hessian", "title": "The maximum eigenvalue of the loss Hessian increases over the course of training until it stabilizes at a value equal to roughly two divided by the learning rate.", "to": "maximum eigenvalue", "width": 1.0}, {"from": "loss hessian", "title": "contextual proximity", "to": "networks", "width": 0.5}, {"from": "loss hessian", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "loss l", "title": "contextual proximity", "to": "loss l(\u03b8)", "width": 0.5}, {"from": "loss l", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "loss l", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "loss l", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "loss l(\u03b8)", "title": "contextual proximity", "to": "moore-penrose pseudoinverse", "width": 0.5}, {"from": "loss l(\u03b8)", "title": "The loss L(\u03b8) in the MSE setting can be written in terms of the residuals z = f(\u03b8) \u2212 \u02c6y.,contextual proximity", "to": "mse loss setting", "width": 2.0}, {"from": "loss l(\u03b8)", "title": "contextual proximity", "to": "p \u00d7 p matrix q", "width": 0.5}, {"from": "loss l(\u03b8)", "title": "contextual proximity", "to": "pseudoinverse", "width": 0.5}, {"from": "loss l(\u03b8)", "title": "contextual proximity", "to": "quadratic regression models", "width": 0.5}, {"from": "loss l(\u03b8)", "title": "contextual proximity", "to": "q\u03b1ij", "width": 0.5}, {"from": "loss l(\u03b8)", "title": "The loss L(\u03b8) can be written in terms of the residuals z = f(\u03b8) \u2212 \u02c6y.,contextual proximity", "to": "residuals z", "width": 1.5}, {"from": "loss l(\u03b8)", "title": "contextual proximity", "to": "residuals z and jacobian j", "width": 0.5}, {"from": "loss l(\u03b8)", "title": "contextual proximity", "to": "scalar", "width": 1.0}, {"from": "loss l(\u03b8)", "title": "contextual proximity", "to": "scalar \u02dce", "width": 0.5}, {"from": "loss l(\u03b8)", "title": "contextual proximity", "to": "z and j", "width": 0.5}, {"from": "loss l(\u03b8)", "title": "contextual proximity", "to": "\u22022f\u03b1", "width": 0.5}, {"from": "loss l(\u03b8)", "title": "contextual proximity", "to": "\u2202f\u03b1/\u2202\u03b8i", "width": 0.5}, {"from": "low-dimensional feedback mechanism", "title": "contextual proximity", "to": "quadratic approximations", "width": 0.5}, {"from": "low-dimensional limit", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "machine learning models", "title": "Progressive sharpening has been shown to be ubiquitous in machine learning models,contextual proximity", "to": "progressive sharpening", "width": 1.5}, {"from": "matrix", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "matrix", "title": "The output is related to the matrix in the quadratic regression model", "to": "output", "width": 1.0}, {"from": "matrix q1", "title": "Matrix-vector products are used to compute the spectrum of the matrix Q1 \u2261 v1 \u00b7 Q(\u00b7, \u00b7), which is projection of the output of Q in the v1 direction.,contextual proximity", "to": "spectrum", "width": 1.5}, {"from": "matrix-vector products", "title": "contextual proximity", "to": "spectrum", "width": 0.5}, {"from": "matrix-vector products", "title": "The resulting tensor denoted by Q(\u00b7, \u00b7) can be used with matrix-vector products to compute the spectrum of the matrix Q1 \u2261 v1 \u00b7 Q(\u00b7, \u00b7).", "to": "tensor", "width": 1.0}, {"from": "maximum eigenvalue", "title": "contextual proximity", "to": "networks", "width": 0.5}, {"from": "maximum eigenvalue", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "maximum loss hessian eigenvalue", "title": "contextual proximity", "to": "trajectories", "width": 0.5}, {"from": "mech", "title": "contextual proximity", "to": "two-step dynamics", "width": 0.5}, {"from": "mech", "title": "The dynamics are analyzed as \u02dcz approaches 0 in order to understand the mech.", "to": "\u02dcz", "width": 1.0}, {"from": "model", "title": "contextual proximity", "to": "neural tangent kernel (ntk)", "width": 0.5}, {"from": "moore-penrose pseudoinverse", "title": "contextual proximity", "to": "mse loss setting", "width": 0.5}, {"from": "moore-penrose pseudoinverse", "title": "contextual proximity", "to": "q\u03b1ij", "width": 0.5}, {"from": "moore-penrose pseudoinverse", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "moore-penrose pseudoinverse", "title": "Q+ denotes the Moore-Penrose pseudoinverse.", "to": "pseudoinverse", "width": 1.0}, {"from": "moore-penrose pseudoinverse", "title": "Q+ is defined as the Moore-Penrose pseudoinverse in the context.", "to": "q+", "width": 1.0}, {"from": "mse loss setting", "title": "contextual proximity", "to": "p \u00d7 p matrix q", "width": 0.5}, {"from": "mse loss setting", "title": "contextual proximity", "to": "pseudoinverse", "width": 0.5}, {"from": "mse loss setting", "title": "contextual proximity", "to": "quadratic regression models", "width": 0.5}, {"from": "mse loss setting", "title": "contextual proximity", "to": "q\u03b1ij", "width": 0.5}, {"from": "mse loss setting", "title": "contextual proximity", "to": "residuals z", "width": 0.5}, {"from": "mse loss setting", "title": "contextual proximity", "to": "residuals z and jacobian j", "width": 0.5}, {"from": "mse loss setting", "title": "contextual proximity", "to": "scalar", "width": 1.0}, {"from": "mse loss setting", "title": "contextual proximity", "to": "scalar \u02dce", "width": 0.5}, {"from": "mse loss setting", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "mse loss setting", "title": "contextual proximity", "to": "z and j", "width": 0.5}, {"from": "mse loss setting", "title": "contextual proximity", "to": "\u22022f\u03b1", "width": 0.5}, {"from": "mse loss setting", "title": "contextual proximity", "to": "\u2202f\u03b1/\u2202\u03b8i", "width": 0.5}, {"from": "multinomials", "title": "contextual proximity", "to": "nullclines", "width": 0.5}, {"from": "networks", "title": "Non-linear discrete dynamics in training practical networks with large learning rates has highlighted important phenomena arising from it.,contextual proximity", "to": "non-linear discrete dynamics", "width": 1.5}, {"from": "networks", "title": "contextual proximity", "to": "ntk eigenvalue", "width": 0.5}, {"from": "networks", "title": "contextual proximity", "to": "phenomenology", "width": 0.5}, {"from": "networks", "title": "contextual proximity", "to": "progressive sharpening", "width": 1.0}, {"from": "networks", "title": "contextual proximity", "to": "quadratic regression models", "width": 0.5}, {"from": "neural network", "title": "The behavior of progressive sharpening and edge-of-stability isn\u0027t unique to neural networks, indicating a more general property of discrete learning algorithms in high-dimensional models.", "to": "learning algorithms", "width": 1.0}, {"from": "neural tangent kernel (ntk)", "title": "contextual proximity", "to": "non-linear discrete dynamics", "width": 0.5}, {"from": "neural tangent kernel (ntk)", "title": "contextual proximity", "to": "non-linearity", "width": 0.5}, {"from": "neural tangent kernel (ntk)", "title": "contextual proximity", "to": "ntk", "width": 0.5}, {"from": "neural tangent kernel (ntk)", "title": "contextual proximity", "to": "ode", "width": 0.5}, {"from": "neural tangent kernel (ntk)", "title": "contextual proximity", "to": "recent empirical work", "width": 0.5}, {"from": "neural tangent kernel (ntk)", "title": "Models in the constant Neural Tangent Kernel regime exhibit approximately linear predictive function based on the parameters.", "to": "predictive function", "width": 1.0}, {"from": "non-linear", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "non-linear", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "non-linear", "title": "contextual proximity", "to": "\u03c3z", "width": 0.75}, {"from": "non-linear discrete dynamics", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "non-linear discrete dynamics", "title": "Recent empirical work has highlighted important phenomena arising from the non-linear discrete dynamics in training practice.", "to": "recent empirical work", "width": 1.0}, {"from": "non-linear dynamical contribution \u03b72q1(jz1v1, jz1v1)", "title": "contextual proximity", "to": "ratio", "width": 0.5}, {"from": "non-linear dynamical contribution \u03b72q1(jz1v1, jz1v1)", "title": "The non-linear dynamical contribution is discussed in relation to sharpening dynamics, highlighting the impact of non-linear feedback.", "to": "sharpening", "width": 1.0}, {"from": "non-linear dynamical contribution \u03b72q1(jz1v1, jz1v1)", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "non-linear feedback", "title": "contextual proximity", "to": "ratio", "width": 0.5}, {"from": "non-linear feedback", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "ntk", "title": "The EOS behavior in the Neural Tangent Kernel (NTK) is compared to the EOS behavior defined with respect to the full Hessian in a previous work.", "to": "full hessian", "width": 1.0}, {"from": "ntk eigenmode", "title": "contextual proximity", "to": "rn l", "width": 0.5}, {"from": "ntk eigenmode", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 0.75}, {"from": "ntk eigenmode", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}, {"from": "ntk eigenmode", "title": "The projection of the training set residuals onto the top NTK eigenmode is mentioned", "to": "training set residuals", "width": 1.0}, {"from": "ntk eigenvalue", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "nullclines", "title": "contextual proximity", "to": "polynomials", "width": 0.5}, {"from": "nullclines", "title": "contextual proximity", "to": "trajectories", "width": 0.5}, {"from": "nullclines", "title": "contextual proximity", "to": "two step dynamics", "width": 0.5}, {"from": "one-step dynamics", "title": "contextual proximity", "to": "two-step dynamics", "width": 0.5}, {"from": "output", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "output f (x, \u03b8)", "title": "contextual proximity", "to": "spectrum", "width": 0.5}, {"from": "output f (x, \u03b8)", "title": "The second derivative of the output f (x, \u03b8) can be empirically computed by automatic differentiation.", "to": "second derivative", "width": 1.0}, {"from": "p", "title": "contextual proximity", "to": "parameter space", "width": 0.5}, {"from": "p", "title": "contextual proximity", "to": "q", "width": 0.5}, {"from": "p", "title": "contextual proximity", "to": "q(j(cid:62)", "width": 0.5}, {"from": "p", "title": "contextual proximity", "to": "t", "width": 0.5}, {"from": "p", "title": "contextual proximity", "to": "y", "width": 0.5}, {"from": "p", "title": "contextual proximity", "to": "z", "width": 1.0}, {"from": "p", "title": "contextual proximity", "to": "||z||2", "width": 0.5}, {"from": "p", "title": "contextual proximity", "to": "||\u03b7j0j(cid:62)0 z0, j(cid:62)", "width": 0.5}, {"from": "p", "title": "contextual proximity", "to": "\u00a8\u03bbmax(0)", "width": 0.5}, {"from": "p", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "p", "title": "contextual proximity", "to": "\u03b7j(cid:62)t zt", "width": 0.5}, {"from": "p", "title": "contextual proximity", "to": "\u03b8", "width": 0.75}, {"from": "p", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "p", "title": "contextual proximity", "to": "\u03c32", "width": 0.5}, {"from": "p", "title": "contextual proximity", "to": "\ufb01nite fourth moments", "width": 0.5}, {"from": "p \u00d7 p matrix q", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "p \u00d7 p matrix q", "title": "A P \u00d7 P matrix Q and a scalar \u02dcE define the problem.", "to": "scalar \u02dce", "width": 1.0}, {"from": "p=2 case", "title": "This allows writing dynamics solely in terms of the residuals and curvature", "to": "dynamics in terms of \u02dcz and t(0)", "width": 1.0}, {"from": "parameter space", "title": "Both parameters are related in the context of discussing eigenvalues and initialization in a specific mathematical model.", "to": "\ufb01nite fourth moments", "width": 1.0}, {"from": "parameter vector", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "parameter vector", "title": "Quadratic regression model involves the parameter vector, indicating a relationship between the two", "to": "quadratic regression model", "width": 1.0}, {"from": "parameters", "title": "contextual proximity", "to": "trajectories", "width": 0.5}, {"from": "partial derivative", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "phase diagram", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "phase diagram", "title": "Plotting phase diagram of final \u03bbmax reached over various parameters,contextual proximity", "to": "\u03bbmax", "width": 1.5}, {"from": "phase diagram", "title": "contextual proximity", "to": "\u03c3z", "width": 0.75}, {"from": "phenomenological model", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "phenomenology", "title": "contextual proximity", "to": "progressive sharpening", "width": 0.5}, {"from": "phenomenology", "title": "contextual proximity", "to": "two-step dynamics", "width": 0.5}, {"from": "phenomenology", "title": "A class of quadratic regression models is introduced to build a better understanding of the observed behavior and display all the relevant phenomenology.", "to": "quadratic regression models", "width": 1.0}, {"from": "phenomenology", "title": "Plotting every other iterate in the two parameter model demonstrates the phenomenology more clearly.", "to": "two parameter model", "width": 1.0}, {"from": "predictive models", "title": "Second-order regression models are considered as the next simplest class of predictive models compared to models in the NTK regime.", "to": "second-order regression models", "width": 1.0}, {"from": "progressive sharpening", "title": "contextual proximity", "to": "q", "width": 0.5}, {"from": "progressive sharpening", "title": "contextual proximity", "to": "quadratic regression model", "width": 0.75}, {"from": "progressive sharpening", "title": "contextual proximity", "to": "quadratic regression models", "width": 0.5}, {"from": "progressive sharpening", "title": "contextual proximity", "to": "ratio", "width": 0.5}, {"from": "progressive sharpening", "title": "contextual proximity", "to": "rn l", "width": 0.5}, {"from": "progressive sharpening", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "progressive sharpening", "title": "contextual proximity", "to": "top eigenmode", "width": 0.75}, {"from": "progressive sharpening", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 0.75}, {"from": "progressive sharpening", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}, {"from": "progressive sharpening", "title": "Progressive sharpening is proven generically in high-dimensional models, indicating a relationship between quadratic models and sharpening", "to": "quadratic models", "width": 1.0}, {"from": "progressive sharpening and edge of stability", "title": "It is useful to look at the two-step dynamics to understand the progressive sharpening and edge of stability.,contextual proximity", "to": "two-step dynamics", "width": 1.5}, {"from": "pseudoinverse", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "q", "title": "contextual proximity", "to": "quadratic regression model", "width": 0.5}, {"from": "q", "title": "The figure reveals that the spectrum does not shift much from step 3200 to 3900, suggesting that Q doesn\u2019t change much as the EOS dynamics are displayed.,contextual proximity", "to": "spectrum", "width": 1.5}, {"from": "q", "title": "contextual proximity", "to": "t", "width": 0.5}, {"from": "q", "title": "contextual proximity", "to": "trajectories", "width": 0.5}, {"from": "q", "title": "contextual proximity", "to": "y", "width": 0.75}, {"from": "q", "title": "contextual proximity", "to": "z", "width": 1.0}, {"from": "q", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "q", "title": "contextual proximity", "to": "\u03b8", "width": 0.5}, {"from": "q", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.75}, {"from": "q", "title": "contextual proximity", "to": "\u03c3z", "width": 0.75}, {"from": "q(j(cid:62)", "title": "The relation between the terms Q(J(cid:62) and ||\u03b7J0J(cid:62)0 z0, J(cid:62) is discussed in the context of initializations.", "to": "||\u03b7j0j(cid:62)0 z0, j(cid:62)", "width": 1.0}, {"from": "quadratic approximations", "title": "contextual proximity", "to": "real models", "width": 0.5}, {"from": "quadratic approximations", "title": "contextual proximity", "to": "simplified model", "width": 0.5}, {"from": "quadratic approximations", "title": "contextual proximity", "to": "simplified two-parameter model", "width": 0.5}, {"from": "quadratic approximations", "title": "contextual proximity", "to": "theoretical understanding", "width": 0.5}, {"from": "quadratic approximations", "title": "contextual proximity", "to": "two-step dynamics", "width": 0.5}, {"from": "quadratic models", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "quadratic objectives", "title": "In two dimensions, the second-order regression model aligns its NTK eigenvalue towards a specific value, slightly differing from the edge of stability, as explicitly computed.", "to": "second-order regression model", "width": 1.0}, {"from": "quadratic regression model", "title": "There is evidence that low-dimensional features of a quadratic regression model could be used to explain certain aspects.", "to": "low-dimensional features", "width": 1.0}, {"from": "quadratic regression model", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "quadratic regression model", "title": "contextual proximity", "to": "spectrum", "width": 0.5}, {"from": "quadratic regression models", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "q\u03b1ij", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "q\u03b1ij", "title": "Q\u03b1ij =\u22022f\u03b1 is mentioned.", "to": "\u22022f\u03b1", "width": 1.0}, {"from": "random direction", "title": "contextual proximity", "to": "ratio", "width": 0.5}, {"from": "random direction", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "random quadratic regression models", "title": "contextual proximity", "to": "sharpness", "width": 0.5}, {"from": "ratio", "title": "contextual proximity", "to": "sharpening", "width": 0.5}, {"from": "ratio", "title": "contextual proximity", "to": "simple model", "width": 0.5}, {"from": "ratio", "title": "contextual proximity", "to": "top eigenmode", "width": 1.0}, {"from": "ratio", "title": "contextual proximity", "to": "top eigenvalue", "width": 0.5}, {"from": "ratio", "title": "contextual proximity", "to": "z1", "width": 0.5}, {"from": "ratio", "title": "contextual proximity", "to": "\u03b72q1(jz1v1, jz1v1)", "width": 0.5}, {"from": "ratio", "title": "contextual proximity", "to": "\u03bb1z1", "width": 0.5}, {"from": "real world models", "title": "Numerical experiments in real-world models are compared to theories on simplified models in this section.", "to": "theory on simplified models", "width": 1.0}, {"from": "related slow t dynamics", "title": "The slow z dynamics and related slow T dynamics allowed for detailed theoretical analysis.", "to": "slow z dynamics", "width": 1.0}, {"from": "rescaled variables", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "rescaled variables", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "rescaled variables", "title": "Rescaling of parameters and initializations for plotting phase diagram,contextual proximity", "to": "\u03c3z", "width": 1.75}, {"from": "residuals z", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "residuals z and jacobian j", "title": "contextual proximity", "to": "scalar", "width": 0.5}, {"from": "rn l", "title": "contextual proximity", "to": "second-order regression", "width": 0.5}, {"from": "rn l", "title": "contextual proximity", "to": "training set residuals", "width": 0.5}, {"from": "rn l", "title": "contextual proximity", "to": "z", "width": 0.5}, {"from": "rn l", "title": "contextual proximity", "to": "\u02dc\u03c3j", "width": 0.5}, {"from": "rn l", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 1.5}, {"from": "rn l", "title": "contextual proximity", "to": "\u03c3j", "width": 0.5}, {"from": "rn l", "title": "contextual proximity", "to": "\u03c3z", "width": 1.0}, {"from": "scalar", "title": "contextual proximity", "to": "scalar \u02dce", "width": 0.5}, {"from": "scalar", "title": "contextual proximity", "to": "z and j", "width": 0.5}, {"from": "scalar", "title": "contextual proximity", "to": "\u22022f\u03b1", "width": 0.5}, {"from": "scalar", "title": "contextual proximity", "to": "\u2202f\u03b1/\u2202\u03b8i", "width": 0.5}, {"from": "second derivative", "title": "contextual proximity", "to": "spectrum", "width": 0.5}, {"from": "second term in equation 25", "title": "Second term in Equation 25 is crucial for stabilization of \u03bbmax", "to": "stabilization of \u03bbmax", "width": 1.0}, {"from": "second term in equation 25", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "second term in equation 25", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "second term in equation 25", "title": "contextual proximity", "to": "\u03c3z", "width": 0.75}, {"from": "second-order regression", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 0.75}, {"from": "second-order regression", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}, {"from": "sharpening", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "sharpness", "title": "Short timescales behavior near the sharpness is mentioned, indicating a relationship between the two terms,contextual proximity", "to": "short timescales", "width": 1.5}, {"from": "sharpness", "title": "contextual proximity", "to": "stability threshold", "width": 0.5}, {"from": "simple model", "title": "contextual proximity", "to": "top eigenmode", "width": 0.5}, {"from": "simple model", "title": "The decrease in top eigenvalue is compared to the simple model, indicating a relationship between these two concepts in the context.", "to": "top eigenvalue", "width": 1.0}, {"from": "simplified model", "title": "contextual proximity", "to": "two-step dynamics", "width": 0.5}, {"from": "simplified model", "title": "Changes in the top eigenmode are small in the simplified model.", "to": "top eigenmode", "width": 1.0}, {"from": "spectrum", "title": "contextual proximity", "to": "tensor", "width": 0.5}, {"from": "spectrum", "title": "contextual proximity", "to": "y", "width": 0.5}, {"from": "spectrum", "title": "contextual proximity", "to": "y dynamics", "width": 0.5}, {"from": "spectrum", "title": "contextual proximity", "to": "z1", "width": 0.5}, {"from": "spectrum", "title": "contextual proximity", "to": "z2", "width": 0.5}, {"from": "spectrum", "title": "contextual proximity", "to": "\u02dcz", "width": 0.5}, {"from": "spectrum", "title": "contextual proximity", "to": "\u03bb1\u03b7", "width": 0.5}, {"from": "stabilization of \u03bbmax", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "stabilization of \u03bbmax", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "stabilization of \u03bbmax", "title": "contextual proximity", "to": "\u03c3z", "width": 0.75}, {"from": "step sizes", "title": "contextual proximity", "to": "two-step dynamics", "width": 0.5}, {"from": "step sizes", "title": "Step sizes \u03b7 were used in the experiment to show the universality of the coordinates.", "to": "\u03b7", "width": 1.0}, {"from": "t", "title": "contextual proximity", "to": "theta", "width": 0.5}, {"from": "t", "title": "The intuition from the lowest order terms can be formalized, giving a prediction of lim t\u2192\u221e yt = -(cid:15)/2.,contextual proximity", "to": "y", "width": 2.0}, {"from": "t", "title": "The dynamics of z are proportional to t, suggesting a separation of timescales if z^2 is related to t. y first equilibrates to a fixed value, and then z converges to 0.,contextual proximity", "to": "z", "width": 2.0}, {"from": "t (0)", "title": "The statement T (0) = \u03b7JJ(cid:62) suggests a relationship where T (0) is equal to \u03b7 times JJ(cid:62).", "to": "\u03b7jj(cid:62)", "width": 1.0}, {"from": "tanh network", "title": "A tanh network is trained using squared loss on CIFAR10 examples according to the mentioned setting.", "to": "squared loss", "width": 1.0}, {"from": "theoretical understanding", "title": "Analyzing models using the two-step dynamics approach greatly aids in theoretical understanding of the models studied in this work.", "to": "two-step dynamics", "width": 1.0}, {"from": "theta", "title": "contextual proximity", "to": "y", "width": 0.5}, {"from": "theta", "title": "contextual proximity", "to": "z", "width": 0.5}, {"from": "top eigenmode", "title": "contextual proximity", "to": "top eigenvalue", "width": 0.5}, {"from": "top eigenmode", "title": "The z1 dynamics and the top eigenmode play a significant role in the stabilization discussed in the context.,contextual proximity", "to": "z1", "width": 1.5}, {"from": "top eigenmode", "title": "contextual proximity", "to": "\u03b72q1(jz1v1, jz1v1)", "width": 0.5}, {"from": "top eigenmode", "title": "contextual proximity", "to": "\u03bb1z1", "width": 0.5}, {"from": "training datapoint", "title": "Also known as the catapult phase dynamics, this model does not show sharpening or edge-of-stability behavior", "to": "catapult phase dynamics", "width": 1.0}, {"from": "training set residuals", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 0.75}, {"from": "training set residuals", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}, {"from": "trajectories in \u02dcz - t(0) space", "title": "Arrows represent direction of dynamical flows as trajectories stay close to the nullcline", "to": "stay near the nullcline (\u02dcz, f\u02dcz(\u02dcz))", "width": 1.0}, {"from": "two parameter model", "title": "contextual proximity", "to": "two-step dynamics", "width": 0.5}, {"from": "two-step dynamics", "title": "contextual proximity", "to": "\u02dcz", "width": 0.5}, {"from": "two-step dynamics", "title": "contextual proximity", "to": "\u03b7", "width": 0.5}, {"from": "y", "title": "Sharpness converges to a value near the edge of stability, and the small z provably has EOS behavior, understood by the z - y coordinate transformation.,contextual proximity", "to": "z", "width": 2.0}, {"from": "y", "title": "Immediate observation that \u02dcz changes slowly for small y.,contextual proximity", "to": "\u02dcz", "width": 1.5}, {"from": "y", "title": "Let y be defined as y = \u03bb1\u03b7 \u2212 2.", "to": "\u03bb1\u03b7", "width": 1.0}, {"from": "y dynamics", "title": "The dynamics of y is more complicated; yt+2 \u2212 yt is anticorrelated with z2 but there is no low-order functional form in terms of y and z1.", "to": "z2", "width": 1.0}, {"from": "z", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 1.25}, {"from": "z", "title": "contextual proximity", "to": "\u03b8", "width": 0.75}, {"from": "z", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.75}, {"from": "z", "title": "The relation between z and \u03c32 is given in the context equation related to the expectation of eigenvalue.", "to": "\u03c32", "width": 1.0}, {"from": "z", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}, {"from": "||z||2", "title": "The ratio rN L is proportional to the magnitude of z squared and the learning rate \u03b7.", "to": "\u03b7", "width": 1.0}, {"from": "\u02dcz2", "title": "Indication of separation of timescales if \u02dcz2 (cid:29) (cid:15), where y first equilibrates.", "to": "\u2191", "width": 1.0}, {"from": "\u02dc\u03c3j", "title": "contextual proximity", "to": "\u02dc\u03c3z", "width": 0.75}, {"from": "\u02dc\u03c3j", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}, {"from": "\u02dc\u03c3j", "title": "\u03c3J is related to \u02dc\u03c3J by the formula \u03c3J = \u02dc\u03c3J / (DP )1/4", "to": "\u03c3j", "width": 1.0}, {"from": "\u02dc\u03c3z", "title": "contextual proximity", "to": "\u03c3j", "width": 0.75}, {"from": "\u02dc\u03c3z", "title": "\u03c3z is related to \u02dc\u03c3z by the formula \u03c3z = \u02dc\u03c3z/D,contextual proximity", "to": "\u03c3z", "width": 2.5}, {"from": "\u03b7", "title": "contextual proximity", "to": "\u03bbmax", "width": 1.25}, {"from": "\u03b7", "title": "contextual proximity", "to": "\u03c3z", "width": 1.5}, {"from": "\u03b7j(cid:62)t zt", "title": "The gradient descent dynamics equation involves updating \u03b8 based on the product of \u03b7, J, and z.", "to": "\u03b8", "width": 1.0}, {"from": "\u03b8", "title": "contextual proximity", "to": "\u03bbmax", "width": 0.5}, {"from": "\u03bbmax", "title": "contextual proximity", "to": "\u03c3z", "width": 1.5}, {"from": "\u03c3j", "title": "contextual proximity", "to": "\u03c3z", "width": 0.5}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "forceAtlas2Based": {
+            "avoidOverlap": 0,
+            "centralGravity": 0.015,
+            "damping": 0.4,
+            "gravitationalConstant": -31,
+            "springConstant": 0.08,
+            "springLength": 100
+        },
+        "solver": "forceAtlas2Based",
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+                    network.on("selectNode", neighbourhoodHighlight);
+                  
+
+                  
+
+
+                  
+                      network.on("stabilizationProgress", function(params) {
+                          document.getElementById('loadingBar').removeAttribute("style");
+                          var maxWidth = 496;
+                          var minWidth = 20;
+                          var widthFactor = params.iterations/params.total;
+                          var width = Math.max(minWidth,maxWidth * widthFactor);
+                          document.getElementById('bar').style.width = width + 'px';
+                          document.getElementById('text').innerHTML = Math.round(widthFactor*100) + '%';
+                      });
+                      network.once("stabilizationIterationsDone", function() {
+                          document.getElementById('text').innerHTML = '100%';
+                          document.getElementById('bar').style.width = '496px';
+                          document.getElementById('loadingBar').style.opacity = 0;
+                          // really clean the dom element
+                          setTimeout(function () {document.getElementById('loadingBar').style.display = 'none';}, 500);
+                      });
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
