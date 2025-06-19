@@ -4,13 +4,13 @@
 
 **数据获取与处理：**
 
-​	使用爬虫（requests、bs4）爬取了历年AAAI、NeurlPS、CVPR代表性的外文文本共计约1000份，其中 AAAI 400 份，NeurlPS 200 份，CVPR 400 份。
+​	使用爬虫（requests、bs4）爬取了历年 AAAI、CVPR、ICML、KDD、NeurlPS 若干。
 
-​	使用pdfminer，将爬取的 pdf 转换成 txt。然后用Re正则表达式对文本数据进行初步处理（数据清洗）。
+​	使用 pdfminer，将爬取的 pdf 转换成 txt。然后用Re正则表达式对文本数据进行初步处理（数据清洗）。
 
 ​	使用 LangChain 的 RecursiveCharacterTextSplitter 对文本切分成多个片段（chunk），每片段长度约1500字符，重叠150字符。documents2Dataframe 函数将切分后的文本片段转为 DataFrame。
 
-利用 LLM，调用 openAI api，使用gpt-3.5-turbo模型抽取文本中概念及其关系，形成图的边列表。
+利用 LLM，调用 openAI api，使用 gpt-3.5-turbo模型抽取文本中概念及其关系，形成图的边列表。
 
 ​	用 NetworkX 创建无向图，加入节点和边，并对边赋予权重。用 NetworkX 的 Girvan-Newman 算法进行社区检测（划分社区）。给每个社区分配颜色和组号（用 seaborn 生成颜色调色板，并打乱分配）。
 
@@ -24,15 +24,13 @@
 
 ​	基于 PyTorch Geometric 和 Sentence-BERT 的图神经网络文本分类模型，用于从结构化图（CSV边列表）中提取文本语义并训练 GINEConv 图神经网络进行分类。
 
-​	AAAI 文件夹中存储 400 份 graph.csv 文件，NeurIPS 文件夹中存储 200 份 graph.csv 文件，CVPR 文件夹中存储 200 份 graph.csv 文件。读取 graph.csv 前三列分别是 node_1、node_2、edge。
+​	对处理后的 graph.csv 文件进行分类，graph.csv 前三列分别是 node_1、node_2、edge。
 
-​	对节点文本编码：x ← 使用 SentenceTransformer 编码为向量。对边属性编码：edge_attr ← 同样用 SentenceTransformer 对边文本编码。对边索引构造：edge_index ← 节点编号重映射后生成边。SentenceTransformer 使用 'paraphrase-MiniLM-L6-v2'。
+​	对节点文本编码：x ← 使用 SentenceTransformer 编码为向量。对边属性编码：edge_attr ← 同样用 SentenceTransformer 对边文本编码。对边索引构造：edge_index ← 节点编号重映射后生成边。SentenceTransformer 使用 paraphrase-MiniLM-L6-v2。
 
-​	虽然 AAAI 有 400 份文件，但是为了避免数据不平衡，只读取 200 份使用 train_test_split + stratify 保证类别均衡划分。
+​	数据划分为训练、验证、测试集。训练集占 70%，验证集占 15%，测试集占 15%，使用 DataLoader 批处理图结构数据。
 
-​	数据划分为训练、验证、测试集。训练集占 70%，验证集占 15%，测试集占15%，使用 DataLoader 批处理图结构数据。
-
-​	构建GINE 图神经网络，使用两层 GINEConv：节点特征和边特征均由 SentenceTransformer 生成。包含edge_lin先对边特征线性投影。node_mlp1/2用于 GINEConv 中的 MLP。global_mean_pool将图中所有节点聚合为图向量。self.lin输出分类。
+​	构建 GINE 图神经网络，使用两层 GINEConv：节点特征和边特征均由 SentenceTransformer 生成。包含 edge_lin 先对边特征线性投影。node_mlp1/2用于 GINEConv 中的 MLP。global_mean_pool将图中所有节点聚合为图向量。self.lin 输出分类。
 
 **训练过程：**
 
