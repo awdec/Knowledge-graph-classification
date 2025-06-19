@@ -26,7 +26,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 encoder = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
 # 标签映射
-# label_map = {"AAAI": 0, "CVPR2024": 1, "ICML2023": 2, "NeurIPS": 3}
 label_map = {"AAAI": 0, "NeurIPS": 1, "CVPR": 2}
 # label_map = {"AAAI": 0, "NeurIPS": 1}
 subdirs = list(label_map.keys())
