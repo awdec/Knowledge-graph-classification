@@ -85,11 +85,10 @@ import sys
 sys.path.append("..")
 import json
 
-OPENAI_API_KEY = "sk-93qverYBR6IKSZnvFQ9Rn7lN1Enm3P8BM2KBZ8aMwaHqywnP"
+OPENAI_API_KEY = "your api key"
 
 os.environ['OPENAI_API_BASE'] = 'https://api.openai-proxy.org/v1'
 
-# os.environ["DASHSCOPE_API_KEY"] = "sk-93qverYBR6IKSZnvFQ9Rn7lN1Enm3P8BM2KBZ8aMwaHqywnP"
 
 llm = chat_model = ChatOpenAI(openai_api_key=OPENAI_API_KEY, openai_api_base=os.environ['OPENAI_API_BASE'],
                               max_tokens=4096)

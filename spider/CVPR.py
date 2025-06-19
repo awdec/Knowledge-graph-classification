@@ -1,18 +1,13 @@
-import numpy as np
-import requests, bs4
-from concurrent.futures import ProcessPoolExecutor
-import time
-import os
-import io
-from PyPDF2 import PdfMerger
 import contextlib
-from tqdm import tqdm
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.action_chains import ActionChains
+import io
+import os
 import random
+import time
+from concurrent.futures import ProcessPoolExecutor
+
+import bs4
+import requests
+from PyPDF2 import PdfMerger
 
 agent = [
     'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
@@ -169,21 +164,16 @@ class CVPR_spider(Spider):
                     if "pdf" in href[0].text:
                         paper = href[0].get('href')
                         f.write(self.target_prefix_page + paper[1:] + "\n")
-                    # if "supp" in href[1].text:
-                    #     supp = href[1].get('href') 
-                    #     f.write(self.target_prefix_page + supp[1:] + "\n")
                     f.write("\n")
                     paper_num += 1
-                    if (paper_num >= 200):
+                    if paper_num >= 200:
                         break
         f.close()
 
     def get_idx_to_paper_file(self):
         index = open(self.target_idx_to_paper_name, "w+")
-        url_list = []
         with open(self.target_file_name, "r") as fpdf:
             paper = None
-            supp = None
             paper_cnt = 0
             for line in fpdf.readlines():
                 if line == "\n":
@@ -192,11 +182,8 @@ class CVPR_spider(Spider):
                     index.write(str(paper_cnt) + " " + title + "\n")
                     self.url_list.append((str(paper_cnt), paper))
                     paper = None
-                    supp = None
                 elif paper is None:
                     paper = line.strip()
-                # else:
-                # supp = line.strip()
             index.close()
 
 

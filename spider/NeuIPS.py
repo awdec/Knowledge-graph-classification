@@ -1,20 +1,17 @@
-import numpy as np
-import requests, bs4
-from concurrent.futures import ProcessPoolExecutor
-import time
-import os
-import io
-from PyPDF2 import PdfMerger
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.firefox.options import Options
 import contextlib
-from tqdm import tqdm
+import os
+import random
+import time
+from concurrent.futures import ProcessPoolExecutor
+
+import requests
+from PyPDF2 import PdfMerger
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.action_chains import ActionChains
-import random
 
 agent = [
     'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',

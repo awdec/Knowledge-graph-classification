@@ -1,8 +1,5 @@
-import sys
-from yachalk import chalk
-# sys.path.append("..")
-
 import json
+
 import ollama.client as client
 
 

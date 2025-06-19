@@ -1,0 +1,242 @@
+node,group,color,size
+"""baked-in"" approach",1,#a157db,1
+200 topics,2,#d3db57,15
+ability,4,#db5f57,4
+aesthetic,4,#db5f57,26
+aesthetic a,4,#db5f57,8
+aesthetic standards,4,#db5f57,3
+ai,4,#db5f57,4
+alignment,5,#db5791,14
+artifact,4,#db5f57,4
+artifact-based and process-based assessments,4,#db5f57,9
+artifact-based evaluation,4,#db5f57,10
+artifacts,4,#db5f57,11
+artificial intelligence,4,#db5f57,9
+assignment,2,#d3db57,5
+attribute,4,#db5f57,18
+attributes,4,#db5f57,7
+audio,4,#db5f57,6
+auto improvement,4,#db5f57,1
+autonomy,4,#db5f57,29
+autonomy and generativity,4,#db5f57,4
+autonomy or beliefs,4,#db5f57,4
+autonomy to make decisions,4,#db5f57,2
+believes,4,#db5f57,3
+best song,4,#db5f57,6
+bias,4,#db5f57,3
+binary constraints,4,#db5f57,3
+boredom,4,#db5f57,6
+catchiness,4,#db5f57,6
+cc systems,4,#db5f57,4
+characteristic attribute,4,#db5f57,7
+characteristics,4,#db5f57,9
+characteristics of creativity,4,#db5f57,5
+"characteristics of creativity: generation, knowledge representation, intentionality, aesthetic, domain knowledge, autonomy and self-evaluation",4,#db5f57,10
+chord structure,4,#db5f57,3
+chorus,5,#db5791,6
+cognitive process,4,#db5f57,19
+collective density value,4,#db5f57,6
+comment,4,#db5f57,3
+composition,4,#db5f57,17
+computational creative systems,4,#db5f57,1
+computational creativity,4,#db5f57,15
+computational system,4,#db5f57,3
+computer autonomy,4,#db5f57,5
+computers,4,#db5f57,3
+computers and creativity,4,#db5f57,2
+constrained or non-homogeneous markov models (nhmms),2,#d3db57,3
+creative,4,#db5f57,20
+creative artifacts,2,#d3db57,3
+creative system for music composition,4,#db5f57,8
+creatively creative,4,#db5f57,4
+creativity,4,#db5f57,77
+creativity characteristics,4,#db5f57,9
+criteria,4,#db5f57,3
+description,4,#db5f57,6
+descriptions of production methods,2,#d3db57,2
+designer,4,#db5f57,2
+designers,4,#db5f57,3
+domain knowledge,4,#db5f57,10
+domain knowledge typicality (q5),4,#db5f57,18
+e,4,#db5f57,19
+emergent property,4,#db5f57,3
+emotion,4,#db5f57,6
+emotion score(t),2,#d3db57,15
+emotionally charged tweets,2,#d3db57,5
+empath,4,#db5f57,3
+empath library,2,#d3db57,15
+empath vector,4,#db5f57,7
+euclidean distance,4,#db5f57,7
+evaluation,4,#db5f57,22
+external artifact,4,#db5f57,6
+external artifacts,4,#db5f57,6
+familiarity,4,#db5f57,4
+familiarity bias,4,#db5f57,3
+foundation models,4,#db5f57,4
+function fi(x),2,#d3db57,6
+general survey population,4,#db5f57,4
+generalization,4,#db5f57,6
+generation,4,#db5f57,8
+generative model,4,#db5f57,6
+generative process,4,#db5f57,4
+generative subprocesses,9,#db57d3,1
+generative system,2,#d3db57,3
+generativity,4,#db5f57,10
+global structural patterns,4,#db5f57,2
+global structure,4,#db5f57,5
+groups,4,#db5f57,3
+hierarchical bayesian program learning (hbpl) model,4,#db5f57,6
+holistic cc,4,#db5f57,7
+human-level concept models,4,#db5f57,6
+humans,4,#db5f57,4
+implementation,4,#db5f57,3
+intention,4,#db5f57,12
+intention v,2,#d3db57,5
+intention vector ν pop*,7,#5791db,1
+intention ν,4,#db5f57,7
+intentionality,4,#db5f57,10
+internal representations,4,#db5f57,19
+jennings,4,#db5f57,1
+jordanous,4,#db5f57,6
+knowledge base,4,#db5f57,2
+knowledge of music,4,#db5f57,2
+knowledge representation,4,#db5f57,21
+language and image artifacts,4,#db5f57,10
+lead sheet γ,4,#db5f57,19
+learned representations,4,#db5f57,6
+learning and generation,4,#db5f57,6
+length n of the new composition,5,#db5791,7
+lyric,4,#db5f57,7
+lyric generation,4,#db5f57,4
+lyric knowledge base (lkb),4,#db5f57,7
+lyric model,4,#db5f57,4
+lyrics,4,#db5f57,10
+lyrics knowledge base,4,#db5f57,6
+machine,4,#db5f57,6
+machine learning models,4,#db5f57,8
+man,4,#db5f57,11
+manually crafted representations,4,#db5f57,6
+markov model m,2,#d3db57,7
+markov models,4,#db5f57,11
+markov models m,11,#57db5f,1
+midi value,3,#91db57,1
+modalities,4,#db5f57,6
+model,4,#db5f57,3
+"models for sampling η, ϕ, ρ, and λ",4,#db5f57,7
+motifs,5,#db5791,6
+msw-alignment,5,#db5791,6
+multi-smith-waterman (msw) self-alignment algorithm,5,#db5791,6
+mumford and ventura,4,#db5f57,2
+music,4,#db5f57,9
+music composition system,4,#db5f57,9
+music knowledge base,4,#db5f57,6
+music knowledge base (mkb),4,#db5f57,7
+music model,4,#db5f57,4
+musical subpopulation,4,#db5f57,4
+musicians,4,#db5f57,2
+musicianship,4,#db5f57,2
+n,2,#d3db57,15
+name,4,#db5f57,6
+narrow intelligence tasks,4,#db5f57,4
+negative connotation,4,#db5f57,4
+new composition,5,#db5791,14
+nhmm n,4,#db5f57,3
+"nhmm n = (n, m, c1)",2,#d3db57,9
+nhmms,4,#db5f57,7
+notion of process,4,#db5f57,3
+novelty,4,#db5f57,9
+novelty score,4,#db5f57,4
+novelty scores,4,#db5f57,3
+observers,4,#db5f57,2
+opinion about what makes music good,4,#db5f57,2
+opinion or belief,4,#db5f57,4
+output,4,#db5f57,4
+outside opinions,4,#db5f57,2
+overall rating,4,#db5f57,3
+participant,4,#db5f57,16
+participants,4,#db5f57,11
+pattern wi,2,#d3db57,6
+people,4,#db5f57,6
+poetry and music,4,#db5f57,6
+pop music composition,4,#db5f57,4
+pop music lead sheets,4,#db5f57,4
+pop*,4,#db5f57,136
+pop* (pop star),4,#db5f57,8
+pop/rock/show tunes music,4,#db5f57,5
+preconceived notion,4,#db5f57,4
+problems,4,#db5f57,19
+process,4,#db5f57,28
+process of evaluation,2,#d3db57,2
+process of generation,2,#d3db57,9
+q10,4,#db5f57,2
+q12.93,4,#db5f57,6
+q8,4,#db5f57,6
+q9,4,#db5f57,4
+r,4,#db5f57,7
+ratings,4,#db5f57,3
+representation,4,#db5f57,11
+research on human creativity,4,#db5f57,5
+research opportunities,4,#db5f57,4
+researchers,4,#db5f57,3
+respondents,4,#db5f57,12
+sampling,4,#db5f57,4
+scores,4,#db5f57,2
+scoring function,5,#db5791,14
+scoring function s(γ),8,#57d3db,1
+sectional form,5,#db5791,14
+self-evaluation,4,#db5f57,25
+self-evaluation score,4,#db5f57,7
+sentiments,4,#db5f57,4
+sequence length n,2,#d3db57,5
+set of unary constraints c1,2,#d3db57,5
+sheet music,4,#db5f57,3
+sing-ability,4,#db5f57,7
+solving problems,4,#db5f57,6
+song,4,#db5f57,23
+song max,4,#db5f57,9
+song's length,5,#db5791,7
+stages,4,#db5f57,6
+structural alignment,5,#db5791,14
+structure,4,#db5f57,4
+structure model,4,#db5f57,4
+structured,4,#db5f57,6
+structured domain of creativity,4,#db5f57,6
+structured lyrical lead sheet generation,4,#db5f57,4
+structured model,4,#db5f57,3
+style,4,#db5f57,5
+success,4,#db5f57,3
+survey,4,#db5f57,23
+survey avg,4,#db5f57,4
+survey group,4,#db5f57,4
+system,4,#db5f57,52
+system designers,4,#db5f57,2
+systems,4,#db5f57,4
+system’s goals,4,#db5f57,2
+text input ι,2,#d3db57,15
+threshold,5,#db5791,6
+topics,4,#db5f57,5
+topics or emotions v,2,#d3db57,6
+transformer and large language models,4,#db5f57,6
+twitter,4,#db5f57,7
+unary constraint ci,2,#d3db57,6
+unary constraints c1,2,#d3db57,2
+unique pitch values,6,#5f57db,1
+unique structure,10,#dba157,1
+unique word count,12,#57dba1,1
+ussurvey avg,4,#db5f57,6
+v,4,#db5f57,6
+vector em(t),2,#d3db57,5
+viewpoint-specific alignment,5,#db5791,6
+weights,5,#db5791,14
+γ,4,#db5f57,7
+system's notion,1,#a157db,1
+creative characteristics,4,#db5f57,1
+individual characteristics,4,#db5f57,1
+subprocesses,9,#db57d3,1
+candidate compositions,7,#5791db,1
+training sets,11,#57db5f,1
+"[60,76]",3,#91db57,1
+"composition γ = (ν, c, p, r, l)",8,#57d3db,1
+average number of unique pitch values,6,#5f57db,1
+lengths and binary constraint sets,10,#dba157,1
+total word count,12,#57dba1,1

@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import os
-# from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from pathlib import Path
@@ -84,7 +83,6 @@ for txt_file in txt_files:
     )
 
     pages = splitter.split_documents(documents)
-
 
     print(f"Number of chunks for {txt_file.name} = ", len(pages))
 

@@ -78,7 +78,7 @@ def renumber_txt_files(input_dir, start_number):
 
 
 # 使用示例，处理目录中的所有文件
-input_dir = './spider/NeurlPS2025/txt'
+input_dir = './spider/AAAI/txt'
 start_number = 51
 
 # 调用函数进行文件重命名

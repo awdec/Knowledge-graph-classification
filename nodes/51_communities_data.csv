@@ -1,0 +1,242 @@
+node,group
+"""baked-in"" approach",1
+system's notion,1
+200 topics,2
+assignment,2
+constrained or non-homogeneous markov models (nhmms),2
+creative artifacts,2
+descriptions of production methods,2
+emotion score(t),2
+emotionally charged tweets,2
+empath library,2
+function fi(x),2
+generative system,2
+intention v,2
+markov model m,2
+n,2
+"nhmm n = (n, m, c1)",2
+pattern wi,2
+process of evaluation,2
+process of generation,2
+sequence length n,2
+set of unary constraints c1,2
+text input ι,2
+topics or emotions v,2
+unary constraint ci,2
+unary constraints c1,2
+vector em(t),2
+"[60,76]",3
+midi value,3
+ability,4
+aesthetic,4
+aesthetic a,4
+aesthetic standards,4
+ai,4
+artifact,4
+artifact-based and process-based assessments,4
+artifact-based evaluation,4
+artifacts,4
+artificial intelligence,4
+attribute,4
+attributes,4
+audio,4
+auto improvement,4
+autonomy,4
+autonomy and generativity,4
+autonomy or beliefs,4
+autonomy to make decisions,4
+believes,4
+best song,4
+bias,4
+binary constraints,4
+boredom,4
+catchiness,4
+cc systems,4
+characteristic attribute,4
+characteristics,4
+characteristics of creativity,4
+"characteristics of creativity: generation, knowledge representation, intentionality, aesthetic, domain knowledge, autonomy and self-evaluation",4
+chord structure,4
+cognitive process,4
+collective density value,4
+comment,4
+composition,4
+computational creative systems,4
+computational creativity,4
+computational system,4
+computer autonomy,4
+computers,4
+computers and creativity,4
+creative,4
+creative characteristics,4
+creative system for music composition,4
+creatively creative,4
+creativity,4
+creativity characteristics,4
+criteria,4
+description,4
+designer,4
+designers,4
+domain knowledge,4
+domain knowledge typicality (q5),4
+e,4
+emergent property,4
+emotion,4
+empath,4
+empath vector,4
+euclidean distance,4
+evaluation,4
+external artifact,4
+external artifacts,4
+familiarity,4
+familiarity bias,4
+foundation models,4
+general survey population,4
+generalization,4
+generation,4
+generative model,4
+generative process,4
+generativity,4
+global structural patterns,4
+global structure,4
+groups,4
+hierarchical bayesian program learning (hbpl) model,4
+holistic cc,4
+human-level concept models,4
+humans,4
+implementation,4
+individual characteristics,4
+intention,4
+intention ν,4
+intentionality,4
+internal representations,4
+jennings,4
+jordanous,4
+knowledge base,4
+knowledge of music,4
+knowledge representation,4
+language and image artifacts,4
+lead sheet γ,4
+learned representations,4
+learning and generation,4
+lyric,4
+lyric generation,4
+lyric knowledge base (lkb),4
+lyric model,4
+lyrics,4
+lyrics knowledge base,4
+machine,4
+machine learning models,4
+man,4
+manually crafted representations,4
+markov models,4
+modalities,4
+model,4
+"models for sampling η, ϕ, ρ, and λ",4
+mumford and ventura,4
+music,4
+music composition system,4
+music knowledge base,4
+music knowledge base (mkb),4
+music model,4
+musical subpopulation,4
+musicians,4
+musicianship,4
+name,4
+narrow intelligence tasks,4
+negative connotation,4
+nhmm n,4
+nhmms,4
+notion of process,4
+novelty,4
+novelty score,4
+novelty scores,4
+observers,4
+opinion about what makes music good,4
+opinion or belief,4
+output,4
+outside opinions,4
+overall rating,4
+participant,4
+participants,4
+people,4
+poetry and music,4
+pop music composition,4
+pop music lead sheets,4
+pop*,4
+pop* (pop star),4
+pop/rock/show tunes music,4
+preconceived notion,4
+problems,4
+process,4
+q10,4
+q12.93,4
+q8,4
+q9,4
+r,4
+ratings,4
+representation,4
+research on human creativity,4
+research opportunities,4
+researchers,4
+respondents,4
+sampling,4
+scores,4
+self-evaluation,4
+self-evaluation score,4
+sentiments,4
+sheet music,4
+sing-ability,4
+solving problems,4
+song,4
+song max,4
+stages,4
+structure,4
+structure model,4
+structured,4
+structured domain of creativity,4
+structured lyrical lead sheet generation,4
+structured model,4
+style,4
+success,4
+survey,4
+survey avg,4
+survey group,4
+system,4
+system designers,4
+systems,4
+system’s goals,4
+topics,4
+transformer and large language models,4
+twitter,4
+ussurvey avg,4
+v,4
+γ,4
+alignment,5
+chorus,5
+length n of the new composition,5
+motifs,5
+msw-alignment,5
+multi-smith-waterman (msw) self-alignment algorithm,5
+new composition,5
+scoring function,5
+sectional form,5
+song's length,5
+structural alignment,5
+threshold,5
+viewpoint-specific alignment,5
+weights,5
+average number of unique pitch values,6
+unique pitch values,6
+candidate compositions,7
+intention vector ν pop*,7
+"composition γ = (ν, c, p, r, l)",8
+scoring function s(γ),8
+generative subprocesses,9
+subprocesses,9
+lengths and binary constraint sets,10
+unique structure,10
+markov models m,11
+training sets,11
+total word count,12
+unique word count,12

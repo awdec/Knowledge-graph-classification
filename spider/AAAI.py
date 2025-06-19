@@ -164,12 +164,13 @@ class AAAI_spider(Spider):
             ele_list = soup.select('ul.publ-list')
             # by hand
             target_list = [2, 3, 4]  # only vision-related
+            paper_count = 0
             for idx in tqdm(target_list):
                 ele = ele_list[idx]
                 papers_info = ele.select("li.entry.inproceedings")
-                paper_count = 0
+
                 for paper in papers_info:
-                    if paper_count >= 200:
+                    if paper_count >= 1:
                         break
                     title = paper.select_one(".title").text
                     paper_from_link = paper.select_one("div.head").find('a').get('href')

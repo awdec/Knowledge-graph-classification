@@ -1,18 +1,13 @@
-import numpy as np
-import requests, bs4
-from concurrent.futures import ProcessPoolExecutor
-import time
-import os
-import io
-from PyPDF2 import PdfMerger
 import contextlib
-from tqdm import tqdm
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.action_chains import ActionChains
+import io
+import os
 import random
+import time
+from concurrent.futures import ProcessPoolExecutor
+
+import bs4
+import requests
+from PyPDF2 import PdfMerger
 
 
 class Spider():
