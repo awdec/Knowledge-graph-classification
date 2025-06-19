@@ -1,7 +1,7 @@
 import openai
 
 client = openai.OpenAI(
-    api_key="sk-93qverYBR6IKSZnvFQ9Rn7lN1Enm3P8BM2KBZ8aMwaHqywnP",
+    api_key="your api key",
     base_url='https://api.openai-proxy.org/v1',  # 如果你用的是 CloseAI
 )
 
